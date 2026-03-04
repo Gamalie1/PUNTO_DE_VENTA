@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Lista de productos{% endblock %}
+{% load static %}
+{% block content %}
+<!doctype html>
+<html>
+  <head>
+    <title>Inventario</title>
+    <style>
+      body {
+        font-family: Arial;
+        padding: 30px;
+        background: #f4f6f9;
+      }
+      .card {
+        background: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 10px;
+        display: flex;
+        gap: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+        border-radius: 10px;
+      }
+      .btn {
+        display: inline-block;
+        padding: 8px 15px;
+        background: #4e73df;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Inventario de Productos</h2>
+
+    <a href="{% url 'crear_producto' %}" class="btn">+ Nuevo Producto</a>
+
+    <hr />
+
+    {% for producto in productos %}
+    <div class="card">
+      {% if producto.imagen %}
+      <img src="{{ producto.imagen.url }}" />
+      {% else %}
+      <img src="https://via.placeholder.com/120" />
+      {% endif %}
+
+      <div>
+        <h3>{{ producto.nombre }}</h3>
+        <p>{{ producto.descripcion }}</p>
+        <p><strong>Precio:</strong> ${{ producto.precio }}</p>
+        <p><strong>Stock:</strong> {{ producto.stock }}</p>
+      </div>
+    </div>
+    {% empty %}
+    <p>No hay productos registrados.</p>
+    {% endfor %}
+  </body>
+</html>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% load static %}
+<!doctype html>
+<html>
+  <head>
+    <title>Punto de Venta</title>
+    <style>
+  body {
+    font-family: Arial;
+    display: flex;
+    margin: 0;
+    height: 100vh;
+    background: #f4f6f9;
+  }
+
+  /* PANEL PRODUCTOS */
+  .productos {
+    width: 65%;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fc;
+  }
+
+  /* PANEL CARRITO */
+  .carrito {
+    width: 35%;
+    padding: 20px;
+    background: #2c3e50;
+    color: white;
+  }
+
+  /* TARJETA PRODUCTO */
+  .producto-card {
+    background: white;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: 0.2s;
+  }
+
+  .producto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+  }
+
+  /* IMAGEN PEQUEÑA */
+  .producto-img {
+    width: 70px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  /* INFO PRODUCTO */
+  .producto-info {
+    flex: 1;
+  }
+
+  .producto-info h4 {
+    margin: 0;
+    font-size: 15px;
+  }
+
+  .producto-info p {
+    margin: 3px 0;
+    font-weight: bold;
+  }
+
+  .producto-info small {
+    color: gray;
+  }
+
+  /* BOTONES */
+  .btn {
+    padding: 6px 10px;
+    background: #1cc88a;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: 0.2s;
+  }
+
+  .btn:hover {
+    background: #17a673;
+  }
+
+  .total {
+    font-size: 22px;
+    margin-top: 20px;
+    font-weight: bold;
+  }
+
+  .btn-finalizar {
+    background: #e74a3b;
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
+    font-size: 15px;
+  }
+
+  .btn-finalizar:hover {
+    background: #c0392b;
+  }
+</style>
+  </head>
+  <body>
+
+<div class="productos">
+    <h2>Productos</h2>
+
+    <div class="grid-productos">
+        {% for producto in productos %}
+            <div class="producto-card">
+                
+                {% if producto.imagen %}
+                    <img src="{{ producto.imagen.url }}" class="producto-img">
+                {% else %}
+                    <img src="https://via.placeholder.com/150" class="producto-img">
+                {% endif %}
+
+                <div class="producto-info">
+                    <h4>{{ producto.nombre }}</h4>
+                    <p>$ {{ producto.precio }}</p>
+                    <small>Stock: {{ producto.stock }}</small>
+                </div>
+
+                <button class="btn"
+                    onclick="agregarAlCarrito('{{ producto.id }}', '{{ producto.nombre }}', '{{ producto.precio }}')">
+                    Agregar
+                </button>
+
+            </div>
+        {% endfor %}
+    </div>
+</div>
+    <div class="carrito">
+      <h2>Carrito</h2>
+
+      <ul id="lista-carrito"></ul>
+
+      <div class="total">Total: $<span id="total">0</span></div>
+
+      <form method="POST">
+        {% csrf_token %}
+        <button type="submit" class="btn-finalizar">Finalizar Venta</button>
+      </form>
+    </div>
+
+    <script>
+      let carrito = {};
+      let total = 0;
+
+      function agregarAlCarrito(id, nombre, precio) {
+        precio = parseFloat(precio);
+
+        if (!carrito[id]) {
+          carrito[id] = { nombre: nombre, precio: precio, cantidad: 1 };
+        } else {
+          carrito[id].cantidad += 1;
+        }
+
+        renderCarrito();
+      }
+
+      function renderCarrito() {
+        let lista = document.getElementById("lista-carrito");
+        lista.innerHTML = "";
+        total = 0;
+
+        for (let id in carrito) {
+          let item = carrito[id];
+          let subtotal = item.precio * item.cantidad;
+          total += subtotal;
+
+          lista.innerHTML += `
+            <li>
+                ${item.nombre} x${item.cantidad}
+                - $${subtotal.toFixed(2)}
+            </li>
+        `;
+        }
+
+        document.getElementById("total").innerText = total.toFixed(2);
+      }
+    </script>
+  </body>
+</html>

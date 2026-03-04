@@ -1,0 +1,144 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Iniciar Sesión</title>
+
+    <!-- Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(-45deg, #4e73df, #1cc88a, #36b9cc, #858796);
+        background-size: 400% 400%;
+        animation: gradientBG 10s ease infinite;
+      }
+
+      @keyframes gradientBG {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .login-container {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(15px);
+        padding: 40px;
+        width: 350px;
+        border-radius: 20px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        color: white;
+      }
+
+      .login-container h2 {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: 600;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: none;
+        border-radius: 30px;
+        outline: none;
+        font-size: 14px;
+      }
+
+      .form-group input:focus {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.6);
+      }
+
+      .btn-login {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 30px;
+        background: white;
+        color: #4e73df;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .btn-login:hover {
+        background: #f8f9fc;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .error {
+        background: rgba(255, 0, 0, 0.2);
+        padding: 8px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 13px;
+      }
+
+      .footer-text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="login-container">
+      <h2>Bienvenido</h2>
+
+      {% if form.errors %}
+      <div class="error">Usuario o contraseña incorrectos</div>
+      {% endif %}
+
+      <form method="POST">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <input type="text" name="username" placeholder="Usuario" required />
+        </div>
+
+        <div class="form-group">
+          <input
+            type="password"
+            name="password"
+            placeholder="Contraseña"
+            required
+          />
+        </div>
+
+        <button type="submit" class="btn-login">Iniciar Sesión</button>
+      </form>
+
+      <div class="footer-text">Sistema Administrativo © 2026</div>
+    </div>
+  </body>
+</html>

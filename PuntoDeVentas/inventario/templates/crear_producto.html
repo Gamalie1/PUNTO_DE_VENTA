@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Subir producto{% endblock %}
+{% load static %}
+
+{% block content %}
+<!doctype html>
+<html>
+  <head>
+    <title>Nuevo Producto</title>
+    <style>
+      body {
+        font-family: Arial;
+        padding: 30px;
+        background: #f4f6f9;
+      }
+      form {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+      input,
+      textarea {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 10px;
+      }
+      button {
+        background: #1cc88a;
+        border: none;
+        padding: 10px;
+        color: white;
+        width: 100%;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Registrar Producto</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %} {{ form.as_p }}
+      <button type="submit">Guardar</button>
+    </form>
+  </body>
+</html>
+{% endblock %}
