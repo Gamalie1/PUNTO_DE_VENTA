@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Lista de Cajas{% endblock %}
+{% load static %}
+
+{% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+  .small-box {
+    transition: transform 0.2s;
+    cursor: pointer;
+  }
+  .small-box:hover {
+    transform: translateY(-5px);
+  }
+  .table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    cursor: pointer;
+  }
+  .badge-estado {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+    border-radius: 20px;
+  }
+  .estado-abierta {
+    background-color: #28a745;
+    color: white;
+  }
+  .estado-cerrada {
+    background-color: #dc3545;
+    color: white;
+  }
+  .filtros-card {
+    background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%);
+    border-left: 4px solid #17a2b8;
+  }
+  .btn-accion {
+    transition: transform 0.2s;
+  }
+  .btn-accion:hover {
+    transform: translateY(-2px);
+  }
+  .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  
+  <!-- Tarjetas de resumen -->
+  <div class="row">
+    <div class="col-lg-4 col-6">
+      <div class="small-box bg-info">
+        <div class="inner">
+          <h3>{{ total_cajas }}</h3>
+          <p>Total de Cajas</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-cash-register"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-6">
+      <div class="small-box bg-success">
+        <div class="inner">
+          <h3>{{ cajas_abiertas }}</h3>
+          <p>Cajas Abiertas</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-unlock-alt"></i>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4 col-6">
+      <div class="small-box bg-danger">
+        <div class="inner">
+          <h3>{{ cajas_cerradas }}</h3>
+          <p>Cajas Cerradas</p>
+        </div>
+        <div class="icon">
+          <i class="fas fa-lock"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Tarjeta principal -->
+  <div class="card shadow">
+    <div class="card-header bg-gradient-primary text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-cash-register"></i> Lista de Cajas
+        </h5>
+        <a href="{% url 'caja_create' %}" class="btn btn-light btn-sm">
+          <i class="fas fa-plus-circle"></i> Crear nueva Caja
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      
+      <!-- Filtros de búsqueda -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card filtros-card">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por nombre de caja...">
+                  </div>
+                </div>
+                <div class="col-md-4">
+                  <select id="estadoFilter" class="form-control">
+                    <option value="">Todos los estados</option>
+                    <option value="abierta">Abiertas</option>
+                    <option value="cerrada">Cerradas</option>
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <button id="btnLimpiar" class="btn btn-secondary btn-block">
+                    <i class="fas fa-eraser"></i> Limpiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de Cajas -->
+      <div class="table-responsive">
+        <table class="table table-hover table-striped" id="tablaCajas">
+          <thead class="thead-light">
+            <tr class="text-center">
+              <th><i class="fas fa-tag"></i> Nombre</th>
+              <th><i class="fas fa-dollar-sign"></i> Saldo Actual</th>
+              <th><i class="fas fa-calendar-alt"></i> Fecha de Apertura</th>
+              <th><i class="fas fa-chart-line"></i> Estado</th>
+              <th><i class="fas fa-exchange-alt"></i> Cortes</th>
+              <th><i class="fas fa-cogs"></i> Acciones</th>
+             </tr>
+          </thead>
+          <tbody>
+            {% for caja in cajas %}
+            <tr data-nombre="{{ caja.nombre|lower }}" data-estado="{% if not caja.cerrado %}abierta{% else %}cerrada{% endif %}">
+              <td class="align-middle font-weight-bold">
+                <i class="fas fa-cash-register text-info"></i>
+                {{ caja.nombre }}
+              </td>
+              <td class="align-middle text-success font-weight-bold text-center">
+                ${{ caja.saldo_actual|floatformat:2 }}
+              </td>
+              <td class="align-middle text-center">
+                <span class="badge badge-light">
+                  <i class="far fa-calendar-alt"></i> {{ caja.fecha_apertura|date:"d/m/Y H:i" }}
+                </span>
+              </td>
+              <td class="align-middle text-center">
+                {% if not caja.cerrado %}
+                  <span class="badge badge-success badge-estado estado-abierta">
+                    <i class="fas fa-unlock-alt"></i> Abierta
+                  </span>
+                {% else %}
+                  <span class="badge badge-danger badge-estado estado-cerrada">
+                    <i class="fas fa-lock"></i> Cerrada
+                  </span>
+                {% endif %}
+              </td>
+              <td class="align-middle text-center">
+                <a href="{% url 'corte_caja_list' caja.id %}" class="btn btn-info btn-sm btn-accion" title="Ver cortes de caja">
+                  <i class="fas fa-exchange-alt"></i> Ver Cortes
+                </a>
+              </td>
+              <td class="align-middle text-center">
+                <div class="btn-group btn-group-sm">
+                  <a href="{% url 'caja_detail' caja.pk %}" class="btn btn-primary btn-accion" title="Ver detalles">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  {% if not caja.cerrado %}
+                    <a href="{% url 'registrar_corte_caja' caja.id %}" class="btn btn-warning btn-accion" title="Cerrar caja">
+                      <i class="fas fa-cash-register"></i>
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">
+                <i class="fas fa-box-open fa-3x mb-3"></i><br>
+                No hay cajas registradas
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+         </table>
+      </div>
+      
+      <!-- Paginación -->
+      {% if is_paginated %}
+      <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Navegación de páginas">
+          <ul class="pagination pagination-sm">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1" aria-label="Primera">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-left"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i></span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Última">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-right"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-right"></i></span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Filtros en tiempo real
+    const searchInput = document.getElementById('searchInput');
+    const estadoFilter = document.getElementById('estadoFilter');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const tabla = document.getElementById('tablaCajas');
+    const rows = tabla.querySelectorAll('tbody tr');
+    
+    function filtrarTabla() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const estadoValue = estadoFilter.value;
+      
+      rows.forEach(row => {
+        // Omitir fila de "no hay cajas"
+        if (row.cells.length === 1) return;
+        
+        const nombre = row.getAttribute('data-nombre') || '';
+        const estado = row.getAttribute('data-estado') || '';
+        
+        let mostrar = true;
+        
+        if (searchTerm && !nombre.includes(searchTerm)) {
+          mostrar = false;
+        }
+        
+        if (estadoValue && estado !== estadoValue) {
+          mostrar = false;
+        }
+        
+        row.style.display = mostrar ? '' : 'none';
+      });
+    }
+    
+    searchInput.addEventListener('keyup', filtrarTabla);
+    estadoFilter.addEventListener('change', filtrarTabla);
+    
+    btnLimpiar.addEventListener('click', function() {
+      searchInput.value = '';
+      estadoFilter.value = '';
+      filtrarTabla();
+    });
+    
+    // Mostrar mensajes de Django con SweetAlert
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          Swal.fire({
+            title: 'Error',
+            text: '{{ message }}',
+            icon: 'error',
+            confirmButtonColor: '#dc3545'
+          });
+        {% elif message.tags == 'success' %}
+          Swal.fire({
+            title: '¡Éxito!',
+            text: '{{ message }}',
+            icon: 'success',
+            confirmButtonColor: '#28a745',
+            timer: 3000,
+            showConfirmButton: true
+          });
+        {% elif message.tags == 'warning' %}
+          Swal.fire({
+            title: 'Advertencia',
+            text: '{{ message }}',
+            icon: 'warning',
+            confirmButtonColor: '#ffc107'
+          });
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  });
+</script>
+{% endblock %}
+{% endblock %}

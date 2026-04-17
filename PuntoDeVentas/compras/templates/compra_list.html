@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Registro de Compras{% endblock %}
+
+{% block extra_css %}
+
+<style>
+  .info-box {
+    transition: transform 0.2s;
+  }
+  .info-box:hover {
+    transform: translateY(-5px);
+  }
+  .table-hover tbody tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    cursor: pointer;
+  }
+  .badge-estado {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+  }
+  .btn-group-sm > .btn {
+    margin: 0 2px;
+  }
+  .filtros-card {
+    background: #f8f9fc;
+    border-left: 4px solid #17a2b8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Tarjeta principal -->
+  <div class="card shadow">
+    <div class="card-header bg-gradient-info text-white">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+          <i class="fas fa-shopping-cart"></i> Registro de Compras
+        </h5>
+        <a href="{% url 'compra_create' %}" class="btn btn-light btn-sm">
+          <i class="fas fa-plus-circle"></i> Nueva Compra
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      
+      <!-- Filtros de búsqueda -->
+      <div class="row mb-4">
+        <div class="col-md-12">
+          <div class="card filtros-card">
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <div class="input-group">
+                    <div class="input-group-prepend">
+                      <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Buscar por descripción...">
+                  </div>
+                </div>
+                <div class="col-md-3">
+                  <select id="estadoFilter" class="form-control">
+                    <option value="">Todos los estados</option>
+                    <option value="activa">Activas</option>
+                    <option value="anulada">Anuladas</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <input type="date" id="fechaFilter" class="form-control" placeholder="Filtrar por fecha">
+                </div>
+                <div class="col-md-2">
+                  <button id="btnLimpiar" class="btn btn-secondary btn-block">
+                    <i class="fas fa-eraser"></i> Limpiar
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tabla de compras -->
+      <div class="table-responsive">
+        <table class="table table-hover table-striped" id="tablaCompras">
+          <thead class="thead-light">
+            <tr class="text-center">
+              <th><i class="fas fa-calendar"></i> Fecha</th>
+              <th><i class="fas fa-align-left"></i> Descripción</th>
+              <th><i class="fas fa-cubes"></i> Cantidad</th>
+              <th><i class="fas fa-dollar-sign"></i> Total</th>
+              <th><i class="fas fa-info-circle"></i> Estado</th>
+              <th><i class="fas fa-user"></i> Usuario</th>
+              <th><i class="fas fa-cogs"></i> Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for compra in compras %}
+            <tr class="{% if not compra.estado %}table-secondary{% endif %} text-center" data-estado="{% if compra.estado %}activa{% else %}anulada{% endif %}" data-fecha="{{ compra.fecha|date:'Y-m-d' }}" data-descripcion="{{ compra.descripcion|lower }}">
+              <td class="align-middle">
+                <span class="badge badge-light">
+                  <i class="far fa-clock"></i> {{ compra.fecha|date:"d/m/Y H:i" }}
+                </span>
+              </td>
+              <td class="text-left align-middle font-weight-bold">{{ compra.descripcion }}</td>
+              <td class="align-middle">
+                <span class="badge badge-primary badge-pill">{{ compra.cantidad }} unidades</span>
+              </td>
+              <td class="align-middle text-success font-weight-bold">
+                ${{ compra.total|floatformat:2 }}
+              </td>
+              <td class="align-middle">
+                {% if compra.estado %}
+                  <span class="badge badge-success badge-estado">
+                    <i class="fas fa-check-circle"></i> Activa
+                  </span>
+                {% else %}
+                  <span class="badge badge-danger badge-estado">
+                    <i class="fas fa-times-circle"></i> Anulada
+                  </span>
+                {% endif %}
+              </td>
+              <td class="align-middle">
+                <i class="fas fa-user-circle"></i> {{ compra.usuario|default:"Sistema" }}
+              </td>
+              <td class="align-middle">
+                <div class="btn-group btn-group-sm">
+                  {% if compra.estado %}
+                  <a href="{% url 'compra_update' compra.id %}" class="btn btn-warning" title="Editar compra">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button class="btn btn-danger btn-anular" data-id="{{ compra.id }}" data-descripcion="{{ compra.descripcion }}" title="Anular compra">
+                    <i class="fas fa-ban"></i>
+                  </button>
+                  {% else %}
+                  <button class="btn btn-secondary" disabled title="Compra anulada">
+                    <i class="fas fa-ban"></i>
+                  </button>
+                  {% endif %}
+                  {% if request.user.is_superuser %}
+                  <button class="btn btn-danger btn-eliminar" data-id="{{ compra.id }}" data-descripcion="{{ compra.descripcion }}" title="Eliminar permanentemente">
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                <i class="fas fa-box-open fa-3x mb-3"></i><br>
+                No hay compras registradas
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      {% if is_paginated %}
+      <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Navegación de páginas">
+          <ul class="pagination pagination-sm">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1" aria-label="Primera">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-left"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i></span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Última">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-right"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-right"></i></span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Filtros en tiempo real
+    const searchInput = document.getElementById('searchInput');
+    const estadoFilter = document.getElementById('estadoFilter');
+    const fechaFilter = document.getElementById('fechaFilter');
+    const btnLimpiar = document.getElementById('btnLimpiar');
+    const tabla = document.getElementById('tablaCompras');
+    const rows = tabla.querySelectorAll('tbody tr');
+    
+    function filtrarTabla() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const estadoValue = estadoFilter.value;
+      const fechaValue = fechaFilter.value;
+      
+      rows.forEach(row => {
+        // Omitir fila de "no hay compras"
+        if (row.cells.length === 1) return;
+        
+        const descripcion = row.getAttribute('data-descripcion') || '';
+        const estado = row.getAttribute('data-estado') || '';
+        const fecha = row.getAttribute('data-fecha') || '';
+        
+        let mostrar = true;
+        
+        if (searchTerm && !descripcion.includes(searchTerm)) {
+          mostrar = false;
+        }
+        
+        if (estadoValue && estado !== estadoValue) {
+          mostrar = false;
+        }
+        
+        if (fechaValue && fecha !== fechaValue) {
+          mostrar = false;
+        }
+        
+        row.style.display = mostrar ? '' : 'none';
+      });
+    }
+    
+    searchInput.addEventListener('keyup', filtrarTabla);
+    estadoFilter.addEventListener('change', filtrarTabla);
+    fechaFilter.addEventListener('change', filtrarTabla);
+    
+    btnLimpiar.addEventListener('click', function() {
+      searchInput.value = '';
+      estadoFilter.value = '';
+      fechaFilter.value = '';
+      filtrarTabla();
+    });
+    
+    // SweetAlert para anular compra
+    const btnAnular = document.querySelectorAll('.btn-anular');
+    btnAnular.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const compraId = this.getAttribute('data-id');
+        const descripcion = this.getAttribute('data-descripcion');
+        
+        Swal.fire({
+          title: '¿Anular compra?',
+          html: `¿Está seguro de anular la compra <strong>"${descripcion}"</strong>?<br>Esta acción no se puede deshacer.`,
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: '<i class="fas fa-ban"></i> Sí, anular',
+          cancelButtonText: '<i class="fas fa-times"></i> Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = `/compras/anular/${compraId}/`;
+          }
+        });
+      });
+    });
+    
+    // SweetAlert para eliminar compra (solo superuser)
+    const btnEliminar = document.querySelectorAll('.btn-eliminar');
+    btnEliminar.forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const compraId = this.getAttribute('data-id');
+        const descripcion = this.getAttribute('data-descripcion');
+        
+        Swal.fire({
+          title: '¿Eliminar permanentemente?',
+          html: `Esta acción eliminará la compra <strong>"${descripcion}"</strong> de la base de datos.<br><span class="text-danger">⚠️ Esta acción no se puede deshacer.</span>`,
+          icon: 'error',
+          showCancelButton: true,
+          confirmButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          confirmButtonText: '<i class="fas fa-trash-alt"></i> Sí, eliminar',
+          cancelButtonText: '<i class="fas fa-times"></i> Cancelar'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            window.location.href = `/compras/eliminar/${compraId}/`;
+          }
+        });
+      });
+    });
+    
+    // Mostrar mensajes de Django con SweetAlert
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          Swal.fire({
+            title: 'Error',
+            text: '{{ message }}',
+            icon: 'error',
+            confirmButtonColor: '#dc3545'
+          });
+        {% elif message.tags == 'success' %}
+          Swal.fire({
+            title: '¡Éxito!',
+            text: '{{ message }}',
+            icon: 'success',
+            confirmButtonColor: '#28a745',
+            timer: 3000,
+            showConfirmButton: true
+          });
+        {% elif message.tags == 'warning' %}
+          Swal.fire({
+            title: 'Advertencia',
+            text: '{{ message }}',
+            icon: 'warning',
+            confirmButtonColor: '#ffc107'
+          });
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  });
+</script>
+{% endblock %}
+{% endblock %}

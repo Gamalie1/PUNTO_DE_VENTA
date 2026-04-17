@@ -1,0 +1,461 @@
+{% extends "base.html" %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+  {% if object %}Editar Compra{% else %}Nueva Compra{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<!-- SweetAlert2 CSS -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+<style>
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+  .form-group label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #495057;
+  }
+  .form-group label .required {
+    color: #dc3545;
+    margin-left: 3px;
+  }
+  .form-control:focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+  }
+  .card-header {
+    border-bottom: none;
+  }
+  .bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  }
+  .info-icon {
+    font-size: 2rem;
+    color: #fff;
+    opacity: 0.3;
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .resumen-card {
+    background: linear-gradient(135deg, #f8f9fc 0%, #e9ecef 100%);
+    border-radius: 10px;
+    padding: 15px;
+    border-left: 4px solid #28a745;
+  }
+  .resumen-card h3 {
+    margin: 0;
+    color: #28a745;
+  }
+  .help-text {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+  }
+  .errorlist {
+    color: #dc3545;
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+  }
+  .btn-guardar {
+    background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+    border: none;
+    padding: 10px 25px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .btn-guardar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+  }
+  .btn-cancelar {
+    padding: 10px 25px;
+    transition: transform 0.2s;
+  }
+  .btn-cancelar:hover {
+    transform: translateY(-2px);
+  }
+  .card {
+    border: none;
+    border-radius: 15px;
+    overflow: hidden;
+  }
+  .card-body {
+    padding: 2rem;
+  }
+  .badge-estado {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+  }
+  .estado-selector {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 10px 15px;
+  }
+  .cantidad-ayuda {
+    font-size: 0.85rem;
+    color: #6c757d;
+    background: #f8f9fa;
+    padding: 5px 10px;
+    border-radius: 8px;
+    margin-top: 5px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-lg">
+        <div class="card-header bg-gradient-info text-white position-relative">
+          <h5 class="mb-0">
+            <i class="fas {% if object %}fa-edit{% else %}fa-plus-circle{% endif %}"></i>
+            {% if object %}
+              Editar Compra
+            {% else %}
+              Registrar Nueva Compra
+            {% endif %}
+          </h5>
+          <div class="info-icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+        </div>
+        
+        <div class="card-body">
+          <form method="post" id="compraForm">
+            {% csrf_token %}
+            
+            <!-- Fecha (solo lectura, auto-generada) -->
+            {% if object and object.fecha %}
+            <div class="form-group">
+              <label>
+                <i class="fas fa-calendar-alt"></i> Fecha de registro
+              </label>
+              <input type="text" class="form-control" value="{{ object.fecha|date:'d/m/Y H:i' }}" readonly disabled>
+              <small class="help-text">La fecha se asigna automáticamente al crear la compra</small>
+            </div>
+            {% endif %}
+            
+            <!-- Descripción -->
+            <div class="form-group">
+              <label for="{{ form.descripcion.id_for_label }}">
+                <i class="fas fa-align-left"></i> Descripción
+                <span class="required">*</span>
+              </label>
+              {{ form.descripcion|add_class:"form-control"|attr:"placeholder:Ej: Compra de 100 garrafones de agua"|attr:"rows:3" }}
+              {% if form.descripcion.help_text %}
+                <small class="help-text">{{ form.descripcion.help_text }}</small>
+              {% endif %}
+              <div id="charCount" class="help-text text-right">0 caracteres</div>
+              {% for error in form.descripcion.errors %}
+                <div class="errorlist">{{ error }}</div>
+              {% endfor %}
+            </div>
+            
+            <!-- Cantidad y Total (en dos columnas) -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ form.cantidad.id_for_label }}">
+                    <i class="fas fa-cubes"></i> Cantidad
+                  </label>
+                  {{ form.cantidad|add_class:"form-control"|attr:"type:number"|attr:"min:0"|attr:"step:1"|attr:"placeholder:Ej: 100" }}
+                  {% if form.cantidad.help_text %}
+                    <small class="help-text">{{ form.cantidad.help_text }}</small>
+                  {% endif %}
+                  <div class="cantidad-ayuda">
+                    <i class="fas fa-info-circle"></i> Opcional: Ingrese la cantidad de productos comprados
+                  </div>
+                  {% for error in form.cantidad.errors %}
+                    <div class="errorlist">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label for="{{ form.total.id_for_label }}">
+                    <i class="fas fa-dollar-sign"></i> Total pagado
+                    <span class="required">*</span>
+                  </label>
+                  {{ form.total|add_class:"form-control"|attr:"type:number"|attr:"min:0"|attr:"step:0.01"|attr:"placeholder:Ej: 1500.00" }}
+                  {% if form.total.help_text %}
+                    <small class="help-text">{{ form.total.help_text }}</small>
+                  {% endif %}
+                  {% for error in form.total.errors %}
+                    <div class="errorlist">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            
+            <!-- Resumen visual (opcional) -->
+            <div class="resumen-card mb-3" id="resumenCompra" style="display: none;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <i class="fas fa-chart-line fa-2x text-success"></i>
+                  <span class="ml-2">Resumen de compra:</span>
+                </div>
+                <div>
+                  <span id="resumenTexto" class="text-muted"></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Observaciones -->
+            <div class="form-group">
+              <label for="{{ form.observaciones.id_for_label }}">
+                <i class="fas fa-comment"></i> Observaciones
+              </label>
+              {{ form.observaciones|add_class:"form-control"|attr:"rows:3"|attr:"placeholder:Notas adicionales sobre la compra..." }}
+              {% if form.observaciones.help_text %}
+                <small class="help-text">{{ form.observaciones.help_text }}</small>
+              {% endif %}
+              {% for error in form.observaciones.errors %}
+                <div class="errorlist">{{ error }}</div>
+              {% endfor %}
+            </div>
+            
+            <!-- Estado (solo visible en edición) -->
+            {% if object %}
+            <div class="form-group">
+              <label>
+                <i class="fas fa-info-circle"></i> Estado
+              </label>
+              <div class="estado-selector">
+                <div class="custom-control custom-switch">
+                  <input type="checkbox" class="custom-control-input" id="estadoSwitch" name="estado" {% if object.estado %}checked{% endif %}>
+                  <label class="custom-control-label" for="estadoSwitch">
+                    <span id="estadoTexto" class="badge {% if object.estado %}badge-success{% else %}badge-danger{% endif %} badge-estado">
+                      <i class="fas {% if object.estado %}fa-check-circle{% else %}fa-times-circle{% endif %}"></i>
+                      {% if object.estado %}Activa{% else %}Anulada{% endif %}
+                    </span>
+                  </label>
+                </div>
+                <small class="help-text">Cambiar el estado de la compra</small>
+              </div>
+            </div>
+            <input type="hidden" name="estado" id="estadoHidden" value="{{ object.estado }}">
+            {% endif %}
+            
+            <!-- Botones -->
+            <div class="mt-4 d-flex justify-content-between">
+              <a href="{% url 'compra_list' %}" class="btn btn-secondary btn-cancelar">
+                <i class="fas fa-times"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-success btn-guardar" id="btnGuardar">
+                <i class="fas fa-save"></i> 
+                {% if object %}Actualizar Compra{% else %}Guardar Compra{% endif %}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Elementos del formulario
+    const descripcionInput = document.querySelector('textarea[name="descripcion"]');
+    const cantidadInput = document.querySelector('input[name="cantidad"]');
+    const totalInput = document.querySelector('input[name="total"]');
+    const charCountSpan = document.getElementById('charCount');
+    const resumenDiv = document.getElementById('resumenCompra');
+    const resumenTexto = document.getElementById('resumenTexto');
+    const form = document.getElementById('compraForm');
+    
+    // Para edición: manejar el switch de estado
+    const estadoSwitch = document.getElementById('estadoSwitch');
+    const estadoHidden = document.getElementById('estadoHidden');
+    const estadoTexto = document.getElementById('estadoTexto');
+    
+    if (estadoSwitch) {
+      estadoSwitch.addEventListener('change', function() {
+        const isChecked = this.checked;
+        estadoHidden.value = isChecked;
+        
+        if (isChecked) {
+          estadoTexto.className = 'badge badge-success badge-estado';
+          estadoTexto.innerHTML = '<i class="fas fa-check-circle"></i> Activa';
+        } else {
+          estadoTexto.className = 'badge badge-danger badge-estado';
+          estadoTexto.innerHTML = '<i class="fas fa-times-circle"></i> Anulada';
+        }
+      });
+    }
+    
+    // Contador de caracteres para descripción
+    function actualizarContador() {
+      if (descripcionInput) {
+        const caracteres = descripcionInput.value.length;
+        charCountSpan.textContent = `${caracteres} caracteres`;
+        
+        if (caracteres > 200) {
+          charCountSpan.style.color = '#dc3545';
+        } else if (caracteres > 100) {
+          charCountSpan.style.color = '#ffc107';
+        } else {
+          charCountSpan.style.color = '#6c757d';
+        }
+      }
+    }
+    
+    // Actualizar resumen
+    function actualizarResumen() {
+      const cantidad = parseInt(cantidadInput?.value) || 0;
+      const total = parseFloat(totalInput?.value) || 0;
+      
+      if (cantidad > 0 && total > 0) {
+        const precioUnitario = total / cantidad;
+        resumenTexto.innerHTML = `${cantidad} unidades · Total: $${total.toFixed(2)} · Promedio: $${precioUnitario.toFixed(2)} c/u`;
+        resumenDiv.style.display = 'block';
+      } else if (total > 0) {
+        resumenTexto.innerHTML = `Total: $${total.toFixed(2)}`;
+        resumenDiv.style.display = 'block';
+      } else if (cantidad > 0) {
+        resumenTexto.innerHTML = `${cantidad} unidades`;
+        resumenDiv.style.display = 'block';
+      } else {
+        resumenDiv.style.display = 'none';
+      }
+    }
+    
+    // Eventos para actualizar resumen
+    if (cantidadInput) {
+      cantidadInput.addEventListener('input', actualizarResumen);
+    }
+    if (totalInput) {
+      totalInput.addEventListener('input', actualizarResumen);
+    }
+    
+    // Evento para contador de caracteres
+    if (descripcionInput) {
+      descripcionInput.addEventListener('input', actualizarContador);
+      actualizarContador(); // Inicializar
+    }
+    
+    // Actualizar resumen inicial
+    actualizarResumen();
+    
+    // Validación antes de enviar
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const descripcion = descripcionInput?.value.trim() || '';
+      const total = parseFloat(totalInput?.value) || 0;
+      const cantidad = parseInt(cantidadInput?.value) || 0;
+      
+      // Validaciones
+      if (!descripcion) {
+        Swal.fire({
+          title: 'Campo requerido',
+          text: 'Por favor ingrese una descripción para la compra',
+          icon: 'warning',
+          confirmButtonColor: '#ffc107'
+        });
+        descripcionInput?.focus();
+        return;
+      }
+      
+      if (total <= 0) {
+        Swal.fire({
+          title: 'Total inválido',
+          text: 'Por favor ingrese un total válido mayor a 0',
+          icon: 'warning',
+          confirmButtonColor: '#ffc107'
+        });
+        totalInput?.focus();
+        return;
+      }
+      
+      // Preparar mensaje de confirmación
+      let mensajeHtml = `
+        <div class="text-left">
+          <p><strong>Descripción:</strong> ${descripcion}</p>
+          <p><strong>Total pagado:</strong> <span class="text-success">$${total.toFixed(2)}</span></p>
+      `;
+      
+      if (cantidad > 0) {
+        const precioUnitario = total / cantidad;
+        mensajeHtml += `<p><strong>Cantidad:</strong> ${cantidad} unidades</p>`;
+        mensajeHtml += `<p><strong>Precio promedio:</strong> $${precioUnitario.toFixed(2)} c/u</p>`;
+      }
+      
+      if (document.getElementById('observaciones')?.value) {
+        mensajeHtml += `<p><strong>Observaciones:</strong> ${document.getElementById('observaciones').value.substring(0, 100)}${document.getElementById('observaciones').value.length > 100 ? '...' : ''}</p>`;
+      }
+      
+      mensajeHtml += `</div>`;
+      
+      // Confirmación de guardado
+      Swal.fire({
+        title: '{% if object %}¿Actualizar compra?{% else %}¿Guardar compra?{% endif %}',
+        html: mensajeHtml,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-check"></i> Sí, guardar',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Mostrar loading
+          Swal.fire({
+            title: 'Guardando...',
+            text: 'Por favor espere',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+          
+          // Enviar formulario
+          form.submit();
+        }
+      });
+    });
+    
+    // Mostrar mensajes de Django con SweetAlert
+    {% if messages %}
+      {% for message in messages %}
+        {% if message.tags == 'error' %}
+          Swal.fire({
+            title: 'Error',
+            text: '{{ message }}',
+            icon: 'error',
+            confirmButtonColor: '#dc3545'
+          });
+        {% elif message.tags == 'success' %}
+          Swal.fire({
+            title: '¡Éxito!',
+            text: '{{ message }}',
+            icon: 'success',
+            confirmButtonColor: '#28a745',
+            timer: 3000,
+            showConfirmButton: true
+          });
+        {% elif message.tags == 'warning' %}
+          Swal.fire({
+            title: 'Advertencia',
+            text: '{{ message }}',
+            icon: 'warning',
+            confirmButtonColor: '#ffc107'
+          });
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  });
+</script>
+{% endblock %}
+{% endblock %}

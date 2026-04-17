@@ -1,0 +1,31 @@
+{% extends "base.html" %} {% block content %}
+<div class="content-header">
+  <div class="container-fluid">
+    <h1>Eliminar Cliente</h1>
+  </div>
+</div>
+<section class="content">
+  <div class="container-fluid">
+    <div class="card card-danger shadow">
+      <div class="card-header">
+        <h3 class="card-title text-white">¿Estás seguro?</h3>
+      </div>
+      <div class="card-body">
+        <p>
+          ¿Estás seguro de que deseas eliminar al cliente
+          <strong>{{ object.nombre }}</strong>?
+        </p>
+      </div>
+      <div class="card-footer text-right">
+        <form method="POST">
+          {% csrf_token %}
+          <a href="{% url 'clientes:lista' %}" class="btn btn-default"
+            >No, cancelar</a
+          >
+          <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

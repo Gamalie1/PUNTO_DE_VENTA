@@ -1,0 +1,270 @@
+{% extends "base.html" %} 
+{% block title %}Cortes de Caja{% endblock %} 
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow">
+    <div class="card-header">
+      <h3 class="card-title">Cortes de Caja</h3>
+    </div>
+    <div class="card-body">
+      <!-- Mensajes de éxito o error -->
+      {% if messages %}
+      <div class="alert alert-info">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+      </div>
+      {% endif %} {% if not caja.cerrado %}
+      <div class="d-flex justify-content-center mb-3">
+        <!-- Botón para Registrar Nuevo Corte -->
+        <a
+          href="{% url 'registrar_corte_caja' caja.id %}"
+          class="btn btn-primary mx-2"
+        >
+          <i class="fas fa-plus-circle"></i> Registrar Nuevo Corte
+        </a>
+
+        <!-- Botón para Registrar Ingreso -->
+        <a
+          href="#"
+          class="btn btn-success mx-2"
+          data-toggle="modal"
+          data-target="#ingresoModal"
+        >
+          <i class="fas fa-arrow-circle-up"></i> Registrar Ingreso
+        </a>
+
+        <!-- Botón para Registrar Egreso -->
+        <a
+          href="#"
+          class="btn btn-danger mx-2"
+          data-toggle="modal"
+          data-target="#egresoModal"
+        >
+          <i class="fas fa-arrow-circle-down"></i> Registrar Egreso
+        </a>
+      </div>
+      {% else %}
+      <!-- Opcional: mostrar un mensaje indicando que la caja está cerrada -->
+      <div class="alert alert-warning text-center">
+        <i class="fas fa-lock"></i> Esta caja está cerrada. No se pueden
+        realizar movimientos.
+      </div>
+      {% endif %}
+      <!-- Tabla de Cortes de Caja -->
+      <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+          <thead>
+            <tr>
+              <th>Caja</th>
+              <th>Saldo Inicial</th>
+              <th>Ingresos</th>
+              <th>Egros</th>
+              <th>Saldo Final</th>
+              <th>Fecha de Corte</th>
+ 
+            </tr>
+          </thead>
+          <tbody>
+            {% for corte in cortes %}
+            <tr>
+              <td>{{ corte.caja.nombre }}</td>
+              <td>${{ corte.saldo_inicial }}</td>
+              <td>${{ corte.ingresos }}</td>
+              <td>${{ corte.egresos }}</td>
+              <td>${{ corte.saldo_final }}</td>
+              <td>{{ corte.fecha_corte }}</td>
+              
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="ingresoModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form
+        method="POST"
+        action="{% url 'registrar_ingresos_egresos' caja.id %}"
+      >
+        {% csrf_token %}
+
+        <div class="modal-header">
+          <h5 class="modal-title">Registrar Ingreso</h5>
+          <button type="button" class="close" data-dismiss="modal">
+            &times;
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Descripción</label>
+            <input
+              type="text"
+              class="form-control"
+              name="descripcion"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Monto</label>
+            <input
+              type="number"
+              class="form-control"
+              name="monto"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+        </div>
+        <div class="form-group">
+          <label><strong>Método de pago</strong></label>
+
+          <div class="btn-group w-100" role="group">
+            <input
+              type="radio"
+              class="btn-check"
+              name="metodo_pago"
+              value="EFECTIVO"
+              checked
+              id="ing_efectivo"
+            />
+            <label class="btn btn-outline-success" for="ing_efectivo"
+              >💵 Efectivo</label
+            >
+
+            <input
+              type="radio"
+              class="btn-check"
+              name="metodo_pago"
+              value="TARJETA"
+              id="ing_tarjeta"
+            />
+            <label class="btn btn-outline-primary" for="ing_tarjeta"
+              >💳 Tarjeta</label
+            >
+
+            <input
+              type="radio"
+              class="btn-check"
+              name="metodo_pago"
+              value="TRANSFERENCIA"
+              id="ing_transferencia"
+            />
+            <label class="btn btn-outline-warning" for="ing_transferencia"
+              >🏦 Transferencia</label
+            >
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="submit" name="ingreso" class="btn btn-success">
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="egresoModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form
+        method="POST"
+        action="{% url 'registrar_ingresos_egresos' caja.id %}"
+      >
+        {% csrf_token %}
+
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title">Registrar Egreso</h5>
+          <button type="button" class="close text-white" data-dismiss="modal">
+            &times;
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Descripción</label>
+            <input
+              type="text"
+              class="form-control"
+              name="descripcion"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label>Monto</label>
+            <input
+              type="number"
+              class="form-control"
+              name="monto"
+              step="0.01"
+              min="0.01"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label><strong>Método de pago</strong></label>
+
+            <div class="btn-group w-100" role="group">
+              <input
+                type="radio"
+                class="btn-check"
+                name="metodo_pago"
+                value="EFECTIVO"
+                checked
+                id="ing_efectivo"
+              />
+              <label class="btn btn-outline-success" for="ing_efectivo"
+                >💵 Efectivo</label
+              >
+
+              <input
+                type="radio"
+                class="btn-check"
+                name="metodo_pago"
+                value="TARJETA"
+                id="ing_tarjeta"
+              />
+              <label class="btn btn-outline-primary" for="ing_tarjeta"
+                >💳 Tarjeta</label
+              >
+
+              <input
+                type="radio"
+                class="btn-check"
+                name="metodo_pago"
+                value="TRANSFERENCIA"
+                id="ing_transferencia"
+              />
+              <label class="btn btn-outline-warning" for="ing_transferencia"
+                >🏦 Transferencia</label
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">
+            Cancelar
+          </button>
+          <button type="submit" name="egreso" class="btn btn-danger">
+            Guardar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

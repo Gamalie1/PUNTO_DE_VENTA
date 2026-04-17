@@ -1,0 +1,142 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Corte de Caja {{ corte.id }}</title>
+    <style>
+        @page {
+            size: letter;
+            margin: 2cm;
+            @bottom-center {
+                content: "Generado el " today;
+                font-size: 9px;
+                color: #777;
+            }
+        }
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+        }
+        h1, h2, h3 {
+            margin: 0 0 10px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 18px;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .info {
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .info p {
+            margin: 5px 0;
+        }
+        .resumen {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+        }
+        .resumen p {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .total {
+            font-weight: bold;
+            font-size: 14px;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border-bottom: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 9px;
+            text-align: center;
+            color: #777;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>CORTE DE CAJA</h2>
+    </div>
+
+    <div class="info">
+        <p><strong>Caja:</strong> {{ corte.caja.nombre }}</p>
+        <p><strong>Fecha de corte:</strong> {{ corte.fecha_corte|date:"d/m/Y H:i" }}</p>
+        <p><strong>Usuario que cerró:</strong> {{ corte.usuario_cierre.get_full_name|default:corte.usuario_cierre.username }}</p>
+    </div>
+
+    <div class="resumen">
+        <p><strong>Saldo inicial:</strong> ${{ corte.saldo_inicial|floatformat:2 }}</p>
+        <p><strong>Ingresos totales:</strong> ${{ corte.ingresos|floatformat:2 }}</p>
+        <p><strong>Egresos totales:</strong> ${{ corte.egresos|floatformat:2 }}</p>
+        <p class="total"><strong>Saldo final (calculado):</strong> ${{ corte.saldo_final|floatformat:2 }}</p>
+        <p><strong>Diferencia:</strong> ${{ corte.diferencia|floatformat:2 }}</p>
+    </div>
+
+    <h4>Detalle de transacciones</h4>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha/Hora</th>
+                <th>Tipo</th>
+                <th>Método de pago</th>
+                <th>Monto</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transacciones %}
+            <tr>
+                <td>{{ t.fecha|date:"d/m/Y H:i" }}</td>
+                <td>{{ t.get_tipo_display|default:t.tipo }}</td>
+                <td>{{ t.get_metodo_pago_display|default:t.metodo_pago }}</td>
+                <td>${{ t.monto|floatformat:2 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" style="text-align: center;">No hay transacciones registradas en este corte.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Documento generado automáticamente el {% now "d/m/Y H:i:s" %}</p>
+    </div>
+</body>
+</html>

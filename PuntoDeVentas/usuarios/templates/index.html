@@ -1,106 +1,496 @@
-{% extends "base.html" %} 
-{% block title %}Informacion Operacional{% endblock %}
+{% extends "base.html" %}
+{% block title %}Dashboard - Información Operacional{% endblock %}
 {% load static %}
+
+{% block extra_css %}
+<!-- Chart.js CSS -->
+<style>
+  .small-box {
+    transition: transform 0.2s;
+  }
+  .small-box:hover {
+    transform: translateY(-5px);
+  }
+  .card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+  .grafico-container {
+    position: relative;
+    height: 300px;
+  }
+  .info-box-icon {
+    font-size: 2rem;
+  }
+  .top-productos tr:hover {
+    background-color: rgba(0,123,255,0.05);
+    cursor: pointer;
+  }
+  .badge-stock {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.65rem;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-      <div class="container-fluid">
-        <div class="row mb-2">
-          <div class="col-sm-6">
-            <h1 class="m-0">Dashboard</h1>
-          </div><!-- /.col -->
-          
-        </div><!-- /.row -->
-      </div><!-- /.container-fluid -->
+<!-- Content Header (Page header) -->
+
+
+<!-- Main content -->
+<section class="content">
+  <div class="container-fluid">
+    
+    <!-- Tarjetas de resumen -->
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-info">
+          <div class="inner">
+            <h3>${{ total_recaudado|floatformat:2 }}</h3>
+            <p>Total Recaudado</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <a href="{% url 'venta_list' %}" class="small-box-footer">
+            Ver ventas <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-success">
+          <div class="inner">
+            <h3>{{ total_ventas }}</h3>
+            <p>Ventas Realizadas</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <a href="{% url 'venta_list' %}" class="small-box-footer">
+            Ver detalles <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-warning">
+          <div class="inner">
+            <h3>${{ ticket_promedio|floatformat:2 }}</h3>
+            <p>Ticket Promedio</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-receipt"></i>
+          </div>
+          <a href="#" class="small-box-footer">
+            <i class="fas fa-chart-line"></i> Análisis
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-danger">
+          <div class="inner">
+            <h3>{{ total_clientes }}</h3>
+            <p>Clientes Registrados</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-users"></i>
+          </div>
+          <a href="" class="small-box-footer">
+            Ver clientes <i class="fas fa-arrow-circle-right"></i>
+          </a>
+        </div>
+      </div>
     </div>
-    <!-- /.content-header -->
-
-    <!-- Main content -->
-    <section class="content">
-      <div class="container-fluid">
-        <!-- Small boxes (Stat box) -->
-        <div class="row">
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-info">
-              <div class="inner">
-                <h3>150</h3>
-
-                <p>New Orders</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-bag"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
+    
+    <!-- Segunda fila de tarjetas -->
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-info">
+          <div class="inner">
+            <h3>${{ recaudado_hoy|floatformat:2 }}</h3>
+            <p>Ventas de Hoy</p>
+            <small>{{ ventas_hoy }} ventas</small>
           </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-success">
-              <div class="inner">
-                <h3>53<sup style="font-size: 20px">%</sup></h3>
-
-                <p>Bounce Rate</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-stats-bars"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
+          <div class="icon">
+            <i class="fas fa-calendar-day"></i>
           </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-warning">
-              <div class="inner">
-                <h3>44</h3>
-
-                <p>User Registrations</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-person-add"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
-          <div class="col-lg-3 col-6">
-            <!-- small box -->
-            <div class="small-box bg-danger">
-              <div class="inner">
-                <h3>65</h3>
-
-                <p>Unique Visitors</p>
-              </div>
-              <div class="icon">
-                <i class="ion ion-pie-graph"></i>
-              </div>
-              <a href="#" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
-            </div>
-          </div>
-          <!-- ./col -->
         </div>
-        <!-- /.row -->
-        <!-- Main row -->
-        <div class="row">
-          <!-- Left col -->
-          <section class="col-lg-7 connectedSortable">
-            <!-- Custom tabs (Charts with tabs)-->
-          
-           
-        
-            <!-- /.card -->
-          </section>
-          <!-- /.Left col -->
-          <!-- right col (We are only adding the ID to make the widgets sortable)-->
-          <section class="col-lg-5 connectedSortable">
-
-          </section>
-          <!-- right col -->
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-success">
+          <div class="inner">
+            <h3>${{ recaudado_semana|floatformat:2 }}</h3>
+            <p>Ventas de la Semana</p>
+            <small>{{ ventas_semana }} ventas</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-calendar-week"></i>
+          </div>
         </div>
-        <!-- /.row (main row) -->
-      </div><!-- /.container-fluid -->
-    </section>
- 
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-warning">
+          <div class="inner">
+            <h3>${{ recaudado_mes|floatformat:2 }}</h3>
+            <p>Ventas del Mes</p>
+            <small>{{ ventas_mes }} ventas</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-calendar-alt"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-danger">
+          <div class="inner">
+            <h3>${{ recaudado_anio|floatformat:2 }}</h3>
+            <p>Ventas del Año</p>
+            <small>{{ ventas_anio }} ventas</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-calendar"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tercera fila - Inventario y Compras -->
+    <div class="row">
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-danger">
+          <div class="inner">
+            <h3>{{ productos_agotados }}</h3>
+            <p>Productos Agotados</p>
+          </div>
+          <div class="icon">
+            <i class="fas fa-box-open"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-warning">
+          <div class="inner">
+            <h3>{{ productos_bajo_stock }}</h3>
+            <p>Productos con Bajo Stock</p>
+            <small>&lt; 10 unidades</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-success">
+          <div class="inner">
+            <h3>${{ inversion_mes|floatformat:2 }}</h3>
+            <p>Inversión del Mes</p>
+            <small>{{ compras_mes }} compras</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-shopping-bag"></i>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-6">
+        <div class="small-box bg-gradient-info">
+          <div class="inner">
+            <h3>${{ ganancia_estimada|floatformat:2 }}</h3>
+            <p>Ganancia Estimada</p>
+            <small>Ventas - Compras</small>
+          </div>
+          <div class="icon">
+            <i class="fas fa-chart-line"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Gráficos -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-primary text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-line"></i> Ventas por Día (Últimos 7 días)
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="grafico-container">
+              <canvas id="graficoDias"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-success text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-bar"></i> Ventas por Semana (Últimas 4 semanas)
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="grafico-container">
+              <canvas id="graficoSemanas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-warning text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-area"></i> Ventas por Mes (Últimos 6 meses)
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="grafico-container">
+              <canvas id="graficoMeses"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-danger text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-pie"></i> Ventas por Año (Últimos 5 años)
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="grafico-container">
+              <canvas id="graficoAnios"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Tablas de información -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-info text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-trophy"></i> Top 5 Productos más Vendidos
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>#</th>
+                  <th>Producto</th>
+                  <th class="text-right">Unidades Vendidas</th>
+                </tr>
+              </thead>
+              <tbody class="top-productos">
+                {% for producto in productos_top %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    <i class="fas fa-box text-info"></i>
+                    {{ producto.producto__nombre }}
+                  </td>
+                  <td class="text-right font-weight-bold">
+                    <span class="badge badge-success">{{ producto.total_vendido }}</span>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted">
+                    No hay productos vendidos aún
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="card shadow">
+          <div class="card-header bg-gradient-success text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-history"></i> Últimas Ventas
+            </h5>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+              <thead class="thead-light">
+                <tr>
+                  <th>Ticket</th>
+                  <th>Fecha</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for venta in ultimas_ventas %}
+                <tr>
+                  <td>
+                    <i class="fas fa-ticket-alt text-info"></i>
+                    {{ venta.numero_ticket }}
+                  </td>
+                  <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                  <td class="text-right text-success font-weight-bold">
+                    ${{ venta.total|floatformat:2 }}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted">
+                    No hay ventas registradas
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</section>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    
+    // Gráfico por días
+    const ctxDias = document.getElementById('graficoDias').getContext('2d');
+    new Chart(ctxDias, {
+      type: 'line',
+      data: {
+        labels: {{ dias|safe }},
+        datasets: [{
+          label: 'Ventas ($)',
+          data: {{ ventas_dias|safe }},
+          borderColor: 'rgba(23, 162, 184, 1)',
+          backgroundColor: 'rgba(23, 162, 184, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `$${context.raw.toFixed(2)}`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico por semanas
+    const ctxSemanas = document.getElementById('graficoSemanas').getContext('2d');
+    new Chart(ctxSemanas, {
+      type: 'bar',
+      data: {
+        labels: {{ semanas|safe }},
+        datasets: [{
+          label: 'Ventas ($)',
+          data: {{ ventas_semanas|safe }},
+          backgroundColor: 'rgba(40, 167, 69, 0.7)',
+          borderColor: 'rgba(40, 167, 69, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `$${context.raw.toFixed(2)}`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico por meses
+    const ctxMeses = document.getElementById('graficoMeses').getContext('2d');
+    new Chart(ctxMeses, {
+      type: 'line',
+      data: {
+        labels: {{ meses|safe }},
+        datasets: [{
+          label: 'Ventas ($)',
+          data: {{ ventas_meses|safe }},
+          borderColor: 'rgba(255, 193, 7, 1)',
+          backgroundColor: 'rgba(255, 193, 7, 0.1)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `$${context.raw.toFixed(2)}`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+    // Gráfico por años
+    const ctxAnios = document.getElementById('graficoAnios').getContext('2d');
+    new Chart(ctxAnios, {
+      type: 'bar',
+      data: {
+        labels: {{ años|safe }},
+        datasets: [{
+          label: 'Ventas ($)',
+          data: {{ ventas_años|safe }},
+          backgroundColor: 'rgba(220, 53, 69, 0.7)',
+          borderColor: 'rgba(220, 53, 69, 1)',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return `$${context.raw.toFixed(2)}`;
+              }
+            }
+          }
+        }
+      }
+    });
+    
+  });
+</script>
 {% endblock %}

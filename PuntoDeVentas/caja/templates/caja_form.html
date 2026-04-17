@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Crear Caja{% endblock %}
+{% load widget_tweaks %} 
+{% block content %}
+<div class="container-fluid d-flex justify-content-center">
+  <div class="col-md-6 col-lg-4">
+    <div class="card shadow">
+      <div class="card-header">
+        <h3 class="card-title text-center">Crear Caja</h3>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          {% csrf_token %}
+
+          <!-- Nombre de la Caja -->
+          <div class="form-group">
+            <label for="id_nombre">Nombre de la Caja</label>
+            {{ form.nombre|add_class:"form-control" }}
+          </div>
+
+          <!-- Saldo Inicial -->
+          <div class="form-group">
+            <label for="id_saldo_inicial">Saldo Inicial</label>
+            {{ form.saldo_inicial|add_class:"form-control" }}
+          </div>
+
+          <!-- Botón de guardar -->
+
+          <div class="text-center">
+            
+            <!-- Botón de Cancelar -->
+            <a href="{% url 'caja_list'  %}" class="btn btn-secondary">
+              <i class="fas fa-times mr-1"></i> Cancelar
+            </a>
+            <button type="submit" class="btn btn-success">
+              <i class="fas fa-save mr-1"></i> Guardar Caja
+            </button>
+
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %} 
+{% block title %}Confirmación de Venta{% endblock %}
+{% block content %}
+<div class="container">
+  <h2>Venta realizada con éxito</h2>
+  <p>Gracias por tu compra. Aquí está tu ticket:</p>
+  <p><strong>Ticket #: </strong>{{ venta.numero_ticket }}</p>
+  <p><strong>Total: </strong>${{ venta.total }}</p>
+
+  <h3>Detalles de la Venta:</h3>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Cantidad</th>
+        <th>Subtotal</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for detalle in venta.detalles.all %}
+      <tr>
+        <td>{{ detalle.producto.nombre }}</td>
+        <td>{{ detalle.cantidad }}</td>
+        <td>${{ detalle.subtotal }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <a href="{% url 'punto_venta' %}" class="btn btn-primary"
+    >Volver al punto de venta</a
+  >
+</div>
+{% endblock %}

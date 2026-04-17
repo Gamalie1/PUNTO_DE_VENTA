@@ -1,0 +1,157 @@
+{% extends "base.html" %} 
+{% block title %}Detalles de la Caja{% endblock %} 
+{% load widget_tweaks %} 
+{% block content %}
+<div class="container-fluid">
+  <div class="card card-primary shadow-lg">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-cash-register mr-2"></i> Detalles de la Caja
+      </h3>
+    </div>
+
+    <form method="POST">
+      {% csrf_token %}
+
+      <div class="card-body">
+        <div class="row">
+          <!-- 🔹 Columna izquierda -->
+          <div class="col-md-6">
+            <!-- Nombre -->
+            <div class="form-group">
+              <label>Nombre de la Caja</label>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <i class="fas fa-tag"></i>
+                  </span>
+                </div>
+                {{ form.nombre|add_class:"form-control" }}
+              </div>
+            </div>
+
+            <!-- Saldo -->
+            <div class="form-group">
+              <label>Saldo Actual</label>
+              <div class="input-group mb-3">
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <i class="fas fa-dollar-sign"></i>
+                  </span>
+                </div>
+                {{ form.saldo_actual|add_class:"form-control" }}
+              </div>
+            </div>
+
+            {% if caja.cerrado and caja.cortes.last %}
+            <div class="form-group mt-4">
+              <label>Generar Reporte de Corte</label>
+
+              <div class="d-flex justify-content-center">
+                <!-- PDF -->
+                <a
+                  href="{% url 'pdf_corte' caja.cortes.last.id %}"
+                  class="btn btn-danger"
+                >
+                  <i class="fas fa-file-pdf"></i> Generar PDF
+                </a>
+
+                <!-- Ticket -->
+                <a
+                  href="{% url 'ticket_corte' caja.cortes.last.id %}"
+                  target="_blank"
+                  class="btn btn-warning mx-2"
+                >
+                  <i class="fas fa-ticket-alt"></i> Imprimir Ticket
+                </a>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- 🔹 Columna derecha -->
+          <div class="col-md-6">
+            <!-- Estado -->
+            <div class="form-group">
+              <label>Estado de la Caja</label>
+              <div>
+                {% if caja.cerrado %}
+                <span class="badge badge-danger p-2">
+                  <i class="fas fa-lock"></i> Caja Cerrada
+                </span>
+                {% else %}
+                <span class="badge badge-success p-2">
+                  <i class="fas fa-lock-open"></i> Caja Abierta
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Fecha apertura -->
+            <div class="form-group">
+              <label><strong>Fecha de Apertura</strong></label>
+              <div class="form-control bg-light">
+                <i class="far fa-calendar-alt mr-1"></i>
+                {{ caja.fecha_apertura }}
+              </div>
+            </div>
+
+            <!-- Fecha cierre -->
+            <div class="form-group">
+              <label><strong>Fecha de Cierre</strong></label>
+              <div class="form-control bg-light">
+                <i class="far fa-calendar-times mr-1"></i>
+                {{ caja.fecha_cierre|default:"Aún abierta" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr />
+
+        <!-- 🔹 Cerrar caja (solo si está abierta) -->
+        {% if not caja.cerrado %}
+        <div class="form-group">
+          <label>Cerrar Caja</label>
+
+          <div class="custom-control custom-switch mb-3">
+            <input
+              type="checkbox"
+              class="custom-control-input"
+              id="cerrarCaja"
+              name="cerrado"
+            />
+            <label class="custom-control-label" for="cerrarCaja">
+              Activar para cerrar la caja
+            </label>
+          </div>
+
+          <small class="form-text text-muted">
+            Al cerrar la caja ya no se podrán registrar movimientos.
+          </small>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- 🔹 Footer -->
+      <div class="card-footer">
+        <div class="row">
+          <!-- Columna para el botón de volver -->
+          <div class="col-6">
+            <a href="{% url 'caja_list' %}" class="btn btn-secondary btn-block">
+              <i class="fas fa-arrow-left"></i> Volver
+            </a>
+          </div>
+
+          <!-- Columna para el botón de guardar -->
+          <div class="col-6">
+            <button type="submit" class="btn btn-success btn-block">
+              <i class="fas fa-save"></i> Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

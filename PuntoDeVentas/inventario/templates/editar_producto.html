@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}Editar Producto{% endblock %}
+
+{% block content %}
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+
+        <!-- CARD: DATOS DEL PRODUCTO -->
+        <div class="card card-primary shadow-sm">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-box mr-2"></i>Detalles del Producto
+            </h3>
+          </div>
+
+          <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="card-body">
+              {% if form.errors %}
+              <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>Error:</strong> {{ form.errors }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              {% endif %}
+
+              <div class="form-group">
+                <label for="{{ form.nombre.id_for_label }}">Nombre del Producto</label>
+                {{ form.nombre|add_class:"form-control" }}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                {{ form.descripcion|add_class:"form-control" }}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.precio.id_for_label }}">Precio</label>
+                {{ form.precio|add_class:"form-control" }}
+              </div>
+
+              <!-- Stock actual (solo para mostrar) -->
+              <div class="form-group">
+                <label for="{{ form.stock.id_for_label }}">Stock actual</label>
+                {{ form.stock|add_class:"form-control"|attr:"readonly:readonly" }}
+                <small class="text-muted">
+                  El stock no se modifica aquí. Se administra en el apartado de movimientos.
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.imagen.id_for_label }}">Imagen</label>
+                {{ form.imagen|add_class:"form-control" }}
+              </div>
+
+              <div class="form-group">
+                <label for="{{ form.es_unico.id_for_label }}">¿Producto Único?</label>
+                {{ form.es_unico|add_class:"form-control" }}
+              </div>
+            </div>
+
+            <div class="card-footer">
+              <div class="d-flex flex-column gap-2">
+                <button type="submit" class="btn btn-success btn-block shadow-sm py-2">
+                  <i class="fas fa-save mr-1"></i> Guardar Cambios
+                </button>
+                <a href="{% url 'lista_productos' %}" class="btn btn-outline-secondary btn-block py-2 mt-2">
+                  <i class="fas fa-arrow-left mr-1"></i> Volver a la lista
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- CARD: GESTIÓN DE STOCK -->
+        <div class="card card-warning shadow-sm mt-4">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-warehouse mr-2"></i>Movimiento de Stock
+            </h3>
+          </div>
+
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-warning elevation-1">
+                    <i class="fas fa-cubes"></i>
+                  </span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Stock actual</span>
+                    <span class="info-box-number">{{ producto.stock }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-md-6">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-info elevation-1">
+                    <i class="fas fa-barcode"></i>
+                  </span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Tipo de producto</span>
+                    <span class="info-box-number">
+                      {% if producto.es_unico %}
+                        Único
+                      {% else %}
+                        General
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <form method="POST" action="{% url 'agregar_stock' producto.id %}">
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="cantidad">Cantidad a agregar o reducir</label>
+                <input type="number" name="cantidad" id="cantidad" class="form-control" min="1" placeholder="Ejemplo: 10" required>
+              </div>
+
+              <div class="form-group">
+                <label for="comentario">Comentario</label>
+                <textarea name="comentario" id="comentario" class="form-control" rows="3" placeholder="Ejemplo: compra a proveedor, reposición, ajuste de inventario..."></textarea>
+              </div>
+
+              <div class="form-group">
+                <label for="tipo_cambio">Tipo de Movimiento</label>
+                <select class="form-control" name="tipo_cambio" id="tipo_cambio">
+                  <option value="añadido">Agregar Stock</option>
+                  <option value="vendido">Venta (Reducir Stock)</option>
+                  <option value="ajuste">Ajuste de Inventario</option>
+                </select>
+              </div>
+
+              <button type="submit" class="btn btn-warning text-dark font-weight-bold">
+                <i class="fas fa-plus-circle mr-1"></i> Agregar/Reducir Stock
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- CARD OPCIONAL: HISTORIAL -->
+        <div class="card card-secondary shadow-sm mt-4">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-history mr-2"></i>Historial de Movimientos
+            </h3>
+          </div>
+          <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo</th>
+                  <th>Cantidad</th>
+                  <th>Comentario</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for movimiento in historial_stock %}
+                <tr>
+                  <td>{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                  <td>{{ movimiento.tipo_cambio }}</td>
+                  <td>{{ movimiento.cantidad }}</td>
+                  <td>{{ movimiento.comentario|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted py-3">
+                    No hay movimientos registrados.
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

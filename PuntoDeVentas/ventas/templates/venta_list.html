@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Lista de Ventas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <!-- Tarjeta principal de lista de ventas -->
+  <div class="card shadow">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fas fa-list"></i> Historial de Ventas
+      </h3>
+      <div class="card-tools">
+        <a href="{% url 'punto_venta' %}" class="btn btn-success btn-sm">
+          <i class="fas fa-plus-circle"></i> Crear nueva Venta
+        </a>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Filtros -->
+      <form method="get" id="filtroForm">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+              </div>
+              <input type="text" name="search" id="searchTicket" class="form-control" placeholder="Buscar por número de ticket..." value="{{ search }}">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+              </div>
+              <input type="text" name="fecha" id="daterange" class="form-control" placeholder="Rango de fechas" value="{{ fecha }}">
+            </div>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-primary btn-block">
+              <i class="fas fa-filter"></i> Filtrar
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Tabla -->
+      <div class="table-responsive">
+        <table class="table table-hover table-striped" id="ventas-table">
+          <thead class="thead-light">
+            <tr>
+              <th>Número de Ticket</th>
+              <th>Fecha</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for venta in ventas %}
+            <tr>
+              <td class="font-weight-bold">{{ venta.numero_ticket }}</td>
+              <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+              <td class="text-success font-weight-bold">${{ venta.total }}</td>
+              <td>
+                <div class="btn-group">
+                  <a href="{% url 'venta_detail' venta.pk %}" class="btn btn-info btn-sm" title="Ver detalles">
+                    <i class="fas fa-eye"></i>
+                  </a>
+                  <a href="{% url 'imprimir_ticket' venta.pk %}" target="_blank" class="btn btn-secondary btn-sm" title="Reimprimir ticket">
+                    <i class="fas fa-print"></i>
+                  </a>
+                  <a href="{% url 'descargar_ticket' venta.pk %}" class="btn btn-success btn-sm" title="Descargar ticket PDF">
+                    <i class="fas fa-download"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="4" class="text-center text-muted">No hay ventas registradas</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación mejorada (con parámetros GET) -->
+      {% if is_paginated %}
+      <div class="d-flex justify-content-center mt-3">
+        <nav aria-label="Navegación de páginas">
+          <ul class="pagination pagination-sm">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}{% if fecha %}&fecha={{ fecha }}{% endif %}" aria-label="Primera">
+                <i class="fas fa-angle-double-left"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if fecha %}&fecha={{ fecha }}{% endif %}" aria-label="Anterior">
+                <i class="fas fa-angle-left"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-left"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-left"></i></span></li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              {% if num >= page_obj.number|add:-2 and num <= page_obj.number|add:2 %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if fecha %}&fecha={{ fecha }}{% endif %}">{{ num }}</a></li>
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if fecha %}&fecha={{ fecha }}{% endif %}" aria-label="Siguiente">
+                <i class="fas fa-angle-right"></i>
+              </a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}{% if fecha %}&fecha={{ fecha }}{% endif %}" aria-label="Última">
+                <i class="fas fa-angle-double-right"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-right"></i></span></li>
+            <li class="page-item disabled"><span class="page-link"><i class="fas fa-angle-double-right"></i></span></li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function() {
+    // Inicializar daterangepicker
+    $('#daterange').daterangepicker({
+      locale: {
+        format: 'YYYY-MM-DD',
+        separator: ' - ',
+        applyLabel: 'Aplicar',
+        cancelLabel: 'Cancelar',
+        fromLabel: 'Desde',
+        toLabel: 'Hasta',
+        customRangeLabel: 'Personalizado',
+      },
+      autoUpdateInput: false,
+      opens: 'left'
+    });
+
+    // Cargar valor inicial si existe en el input
+    var initialDate = $('#daterange').val();
+    if (initialDate) {
+      var parts = initialDate.split(' - ');
+      if (parts.length === 2) {
+        $('#daterange').data('daterangepicker').setStartDate(parts[0]);
+        $('#daterange').data('daterangepicker').setEndDate(parts[1]);
+        $('#daterange').data('daterangepicker').updateElement();
+      }
+    }
+
+    $('#daterange').on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+    });
+
+    $('#daterange').on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('');
+    });
+
+    // El formulario se envía con el botón Filtrar; ya no necesitamos el evento click aparte
+  });
+</script>
+{% endblock %}

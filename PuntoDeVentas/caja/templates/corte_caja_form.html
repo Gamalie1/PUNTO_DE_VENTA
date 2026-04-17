@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Cerrar Caja{% endblock %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card shadow">
+        <div class="card-header bg-danger text-white">
+          <h4><i class="fas fa-cash-register"></i> Cierre de Caja - {{ caja.nombre }}</h4>
+        </div>
+        <div class="card-body">
+          <form method="POST">
+            {% csrf_token %}
+            
+            <!-- Tarjetas de resumen -->
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-info"><i class="fas fa-dollar-sign"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Saldo Inicial</span>
+                    <span class="info-box-number">${{ saldo_inicial|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-success"><i class="fas fa-arrow-up"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Ingresos</span>
+                    <span class="info-box-number">${{ ingresos|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-danger"><i class="fas fa-arrow-down"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Egresos</span>
+                    <span class="info-box-number">${{ egresos|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="info-box bg-light">
+                  <span class="info-box-icon bg-primary"><i class="fas fa-calculator"></i></span>
+                  <div class="info-box-content">
+                    <span class="info-box-text">Saldo Esperado</span>
+                    <span class="info-box-number">${{ saldo_esperado|floatformat:2 }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ventas -->
+            {% if ventas %}
+            <div class="card mb-3">
+              <div class="card-header bg-info text-white">
+                <h5><i class="fas fa-shopping-cart"></i> Ventas ({{ total_ventas_count }})</h5>
+              </div>
+              <div class="card-body p-0">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="thead-light">
+                    <tr><th>Ticket</th><th>Fecha</th><th>Cliente</th><th class="text-right">Total</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for venta in ventas %}
+                    <tr>
+                      <td>{{ venta.numero_ticket|default:venta.id }}</td>
+                      <td>{{ venta.fecha|date:"d/m/Y H:i" }}</td>
+                      <td>{{ venta.cliente.nombre|default:"-" }}</td>
+                      <td class="text-right text-success">${{ venta.total|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                  <tfoot class="bg-light">
+                    <tr><th colspan="3" class="text-right">Total Ventas:</th><th class="text-right">${{ total_ventas|floatformat:2 }}</th></tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Monto físico y comentarios -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label><strong>💰 Monto contado en caja</strong></label>
+                  {{ form.monto_fisico|add_class:"form-control form-control-lg" }}
+                  <small class="text-muted">Ingrese el dinero real contado en la caja</small>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group">
+                  <label><strong>📝 Comentarios</strong></label>
+                  {{ form.comentario|add_class:"form-control"|attr:"rows:3" }}
+                </div>
+              </div>
+            </div>
+
+            <!-- Botones -->
+            <div class="d-flex justify-content-between mt-4">
+              <a href="{% url 'caja_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+              </a>
+              <button type="submit" class="btn btn-danger" onclick="return confirm('¿Cerrar caja? Esta acción no se puede deshacer.')">
+                <i class="fas fa-lock"></i> Cerrar Caja
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

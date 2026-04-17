@@ -1,0 +1,75 @@
+
+{% extends "base.html" %}
+{% block title %}Detalles del Corte de Caja{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card shadow">
+        <div class="card-header">
+            <h3 class="card-title">Detalles del Corte de Caja</h3>
+        </div>
+        <div class="card-body">
+            <!-- Información General del Corte -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><strong>Caja:</strong></h5>
+                    <p>{{ corte.caja.nombre }}</p>
+                </div>
+                <div class="col-md-6">
+                    <h5><strong>Fecha del Corte:</strong></h5>
+                    <p>{{ corte.fecha_corte }}</p>
+                </div>
+            </div>
+
+            <!-- Detalles del Corte: Saldo Inicial, Ingresos, Egresos -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="saldo_inicial"><strong>Saldo Inicial:</strong></label>
+                        <p>${{ corte.saldo_inicial }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="ingresos"><strong>Ingresos:</strong></label>
+                        <p>${{ corte.ingresos }}</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="egresos"><strong>Egresos:</strong></label>
+                        <p>${{ corte.egresos }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Saldo Final -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="saldo_final"><strong>Saldo Final:</strong></label>
+                        <p class="text-success">${{ corte.saldo_final }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comentario -->
+            {% if corte.comentario %}
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="comentario"><strong>Comentario:</strong></label>
+                        <p>{{ corte.comentario }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Botón para Volver -->
+            <a href="{% url 'corte_caja_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver a la lista de cortes
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

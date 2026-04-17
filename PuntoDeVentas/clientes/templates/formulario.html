@@ -1,0 +1,50 @@
+{% extends "base.html" %} 
+{% block title %}{% if object %}Editar{% else%}Nuevo{% endif %} Cliente{% endblock %} 
+{% block content %}
+
+<section class="content">
+  <div class="container-fluid">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card card-info shadow">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-user-tag mr-2"></i>
+              {% if object %}Editar{% else %}Registrar{% endif %} Cliente
+            </h3>
+          </div>
+          <form method="POST">
+            {% csrf_token %}
+            <div class="card-body">
+              {% if form.errors %}
+              <div class="alert alert-danger">{{ form.errors }}</div>
+              {% endif %} {% for field in form %}
+              <div class="form-group">
+                <label>{{ field.label }}</label>
+                {{ field }}
+              </div>
+              {% endfor %}
+            </div>
+          <div class="card-footer">
+              <div class="d-flex flex-column gap-2">
+                <button
+                  type="submit"
+                  class="btn btn-info btn-block text-white fw-semibold shadow-sm py-2"
+                >
+                  <i class="fas fa-save mr-1"></i> Guardar Cliente
+                </button>
+                <a
+                  href="{% url 'clientes:lista' %}"
+                  class="btn btn-outline-secondary btn-block py-2 mt-2"
+                >
+                  <i class="fas fa-arrow-left mr-1"></i> Volver a la lista
+                </a>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

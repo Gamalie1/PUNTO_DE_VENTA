@@ -17,7 +17,10 @@
       <form method="post">
         {% csrf_token %}
         <div class="text-right">
-          <a href="{% url 'usuarios:lista' %}" class="btn btn-secondary">
+          <a
+            href="{% url 'usuarios:usuarios_lista' %}"
+            class="btn btn-secondary"
+          >
             Cancelar
           </a>
           <button type="submit" class="btn btn-danger">Sí, eliminar</button>

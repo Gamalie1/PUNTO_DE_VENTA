@@ -1,0 +1,44 @@
+{% extends "base.html" %} 
+{% block title %}Detalles de Venta{% endblock %} 
+{% block content %}
+<div class="container-fluid">
+  <div class="card shadow">
+    <div class="card-header">
+      <h3 class="card-title">
+        Detalles de la Venta #{{ venta.numero_ticket }}
+      </h3>
+    </div>
+    <div class="card-body">
+      <h4>Fecha: {{ venta.fecha }}</h4>
+      <h4>Total: ${{ venta.total }}</h4>
+
+      <h5>Productos vendidos:</h5>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th>Precio</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detalle in detalles %}
+          <tr>
+            <td>{{ detalle.producto.nombre }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>${{ detalle.precio }}</td>
+            <td>${{ detalle.subtotal }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="card-footer">
+      <a href="{% url 'venta_list' %}" class="btn btn-primary">
+        <i class="fas fa-arrow-left"></i> Volver a la lista de ventas
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

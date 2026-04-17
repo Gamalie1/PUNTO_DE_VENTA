@@ -1,0 +1,128 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      body {
+        width: 80mm;
+        font-family: monospace;
+        font-size: 12px;
+        margin: 0;
+        padding: 5mm;
+        line-height: 1.4;
+      }
+
+      .center {
+        text-align: center;
+      }
+
+      .right {
+        text-align: right;
+      }
+
+      .bold {
+        font-weight: bold;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px dashed black;
+        margin: 5px 0;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .small {
+        font-size: 10px;
+      }
+
+      .ticket-header {
+        margin-bottom: 10px;
+      }
+
+      .ticket-footer {
+        margin-top: 10px;
+      }
+
+      .product-name {
+        font-size: 12px;
+        margin-bottom: 2px;
+      }
+
+      .total-row {
+        font-weight: bold;
+      }
+
+      .footer-text {
+        font-size: 10px;
+        color: #555;
+      }
+
+      .hr-margin {
+        margin-top: 8px;
+        margin-bottom: 8px;
+      }
+    </style>
+  </head>
+
+  <body onload="window.print()">
+    <!-- 🏪 HEADER -->
+    <div class="center ticket-header">
+      <h3 style="margin: 0">PURIFICADORA</h3>
+      <div class="small">Ticket #{{ venta.id }}</div>
+      <div class="small">{{ venta.fecha }}</div>
+    </div>
+    {% if venta.cliente %}
+    <div class="ticket-cliente">
+      <strong>Cliente:</strong> {{ venta.cliente.nombre }}
+      {% if venta.cliente.telefono %}<br><strong>Teléfono:</strong> {{ venta.cliente.telefono }}{% endif %}
+    </div>
+    {% endif %}
+
+
+    <hr class="hr-margin" />
+
+    <!-- 🛒 PRODUCTOS -->
+    {% for d in detalles %}
+    <div>
+      <div class="product-name">{{ d.producto.nombre }}</div>
+      <div class="row small">
+        <span>{{ d.cantidad }} x ${{ d.precio }}</span>
+        <span>${{ d.total_producto }}</span>
+      </div>
+    </div>
+    {% endfor %}
+
+    <hr class="hr-margin" />
+
+    <!-- 💰 TOTALES -->
+    <div class="row total-row">
+      <span>Subtotal:</span>
+      <span>${{ venta.total }}</span>
+    </div>
+
+    <div class="row total-row">
+      <span>Pagó:</span>
+      <span>${{ venta.monto_pagado }}</span>
+    </div>
+
+    <div class="row total-row">
+      <span>Cambio:</span>
+      <span>${{ venta.cambio }}</span>
+    </div>
+
+    <hr class="hr-margin" />
+
+    <!-- 📝 FOOTER -->
+    <div class="center ticket-footer">
+      <p class="footer-text">¡Gracias por su compra!</p>
+      <p class="footer-text">Visítenos nuevamente.</p>
+      <!-- Mostrar el mensaje del ticket -->
+      <p class="footer-text">{{ mensaje_ticket }}</p>
+      <!-- Mensaje de la sucursal -->
+    </div>
+  </body>
+</html>

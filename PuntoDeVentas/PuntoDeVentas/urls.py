@@ -28,6 +28,10 @@ urlpatterns = [
     path('usuarios/',  include('usuarios.urls')),
     path('inventario/', include('inventario.urls')),
     path('ventas/',  include('ventas.urls')),
+    path('clientes/',  include('clientes.urls')),
+    path('sucursal/',  include('sucursal.urls')),
+    path('caja/',  include('caja.urls')),
+    path('compras/',  include('compras.urls')),
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
