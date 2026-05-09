@@ -29,6 +29,9 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from caja.models import Transaccion
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.decorators.csrf import csrf_exempt
+import logging
+from django.views.decorators.http import require_http_methods
 # Create your views here.
 
 @login_required
@@ -51,64 +54,100 @@ def punto_venta(request):
         cliente_id = request.POST.get("cliente_id")
 
         if not carrito_json:
-            return render(request, "punto_venta.html", {...})
-
-        carrito = json.loads(carrito_json)
-
-        with transaction.atomic():
-            total = 0
-            venta = Venta.objects.create(
-                vendedor=request.user,
-                total=0,
-                caja=caja_abierta  # 👈 Asignar caja
-            )
-
-            if cliente_id:
-                try:
-                    venta.cliente = Cliente.objects.get(id=cliente_id)
-                except:
-                    pass
-
-            # Procesar detalles
-            for producto_id, item in carrito.items():
-                producto = Producto.objects.get(id=producto_id)
-                cantidad = item["cantidad"]
-                subtotal = producto.precio * cantidad
-                total += subtotal
-
-                DetalleVenta.objects.create(
-                    venta=venta,
-                    producto=producto,
-                    cantidad=cantidad,
-                    precio=producto.precio
-                )
-                producto.stock -= cantidad
-                producto.save()
-
-            if total == 0:
-                venta.delete()
-                return render(request, "punto_venta.html", {"mensaje_error": "No hay stock suficiente"})
-
-            venta.total = total
-            venta.monto_pagado = Decimal(monto_pagado) if monto_pagado else None
-            venta.cambio = Decimal(cambio) if cambio else None
-            venta.save()
-
-            # ✅ CREAR TRANSACCIÓN DE INGRESO
-            Transaccion.objects.create(
-                caja=caja_abierta,
-                tipo='INGRESO',
-                metodo_pago='EFECTIVO',
-                monto=total,
-                descripcion=f"Venta #{venta.numero_ticket or venta.id}",
-                venta=venta
-            )
-
             return render(request, "punto_venta.html", {
                 "productos": productos,
                 "clientes": clientes,
-                "success": True,
-                "venta_id": venta.id
+                "mensaje_error": "Carrito vacío"
+            })
+
+        carrito = json.loads(carrito_json)  # carrito: {producto_id: {cantidad, nombre, precio, codigos: []}}
+
+        try:
+            with transaction.atomic():
+                venta = Venta.objects.create(
+                    vendedor=request.user,
+                    total=0,
+                    caja=caja_abierta
+                )
+
+                if cliente_id and cliente_id != '':
+                    try:
+                        venta.cliente = Cliente.objects.get(id=cliente_id)
+                    except Cliente.DoesNotExist:
+                        pass
+
+                total_venta = Decimal('0.00')
+
+                for producto_id_str, data in carrito.items():
+                    producto_id = int(producto_id_str)
+                    producto = Producto.objects.select_for_update().get(id=producto_id)
+                    cantidad = data['cantidad']
+                    codigos_ids = data.get('codigos', [])
+
+                    # Validar productos únicos
+                    if producto.es_unico:
+                        if len(codigos_ids) != cantidad:
+                            raise ValueError(f"La cantidad no coincide con los códigos únicos para {producto.nombre}")
+                        # Obtener los códigos de barras y verificar que no hayan sido usados
+                        codigos = CodigoBarras.objects.select_for_update().filter(id__in=codigos_ids, producto=producto, usado=False)
+                        if codigos.count() != cantidad:
+                            raise ValueError(f"Algún código de barras de {producto.nombre} ya fue usado o es inválido")
+                        # Marcar como usados
+                        codigos.update(usado=True)
+                    else:
+                        # Producto no único: validar stock
+                        if producto.stock < cantidad:
+                            raise ValueError(f"Stock insuficiente para {producto.nombre}. Disponible: {producto.stock}")
+                        # Reducir stock
+                        producto.stock -= cantidad
+                        producto.save()
+
+                    # Crear detalle de venta
+                    subtotal = producto.precio * cantidad
+                    DetalleVenta.objects.create(
+                        venta=venta,
+                        producto=producto,
+                        cantidad=cantidad,
+                        precio=producto.precio
+                    )
+                    total_venta += subtotal
+
+                if total_venta == 0:
+                    venta.delete()
+                    return render(request, "punto_venta.html", {
+                        "productos": productos,
+                        "clientes": clientes,
+                        "mensaje_error": "No se pudo procesar la venta (total cero)"
+                    })
+
+                venta.total = total_venta
+                venta.monto_pagado = Decimal(monto_pagado) if monto_pagado else None
+                venta.cambio = Decimal(cambio) if cambio else None
+                venta.save()
+
+                # Registrar transacción de ingreso
+                Transaccion.objects.create(
+                    caja=caja_abierta,
+                    tipo='INGRESO',
+                    metodo_pago='EFECTIVO',
+                    monto=total_venta,
+                    descripcion=f"Venta #{venta.numero_ticket or venta.id}",
+                    venta=venta
+                )
+
+                return render(request, "punto_venta.html", {
+                    "productos": productos,
+                    "clientes": clientes,
+                    "success": True,
+                    "venta_id": venta.id
+                })
+
+        except Exception as e:
+            # Si ocurre un error, mostrar mensaje adecuado
+            return render(request, "punto_venta.html", {
+                "productos": productos,
+                "clientes": clientes,
+                "mensaje_error": str(e)
             })
 
     return render(request, "punto_venta.html", {"productos": productos, "clientes": clientes})
@@ -371,3 +410,40 @@ def imprimir_ticket(request, venta_id):
         "detalles": detalles,
         "mensaje_ticket": mensaje_ticket  # Pasamos el mensaje del ticket
     })
+
+
+logger = logging.getLogger(__name__)
+@require_http_methods(["GET"])
+@csrf_exempt   # Por simplicidad en pruebas; después usa @require_http_methods y token CSRF
+def api_buscar_por_codigo(request):
+    codigo = request.GET.get('codigo', '').strip()
+    if not codigo:
+        return JsonResponse({'error': 'Código no proporcionado'}, status=400)
+
+    try:
+        cb = CodigoBarras.objects.select_related('producto').get(codigo=codigo)
+        producto = cb.producto
+
+        if producto.stock <= 0 and not producto.es_unico:
+            return JsonResponse({'error': 'Producto sin stock'}, status=400)
+        if producto.es_unico and cb.usado:
+            return JsonResponse({'error': 'Este código ya fue utilizado'}, status=400)
+
+        data = {
+            'success': True,
+            'id': producto.id,
+            'nombre': producto.nombre,
+            'precio': float(producto.precio),
+            'stock': producto.stock,
+            'es_unico': producto.es_unico,
+            'codigo_barras_id': cb.id,
+        }
+        return JsonResponse(data)
+
+    except CodigoBarras.DoesNotExist:
+        logger.warning(f"Código no encontrado: {codigo}")
+        return JsonResponse({'error': f'Código "{codigo}" no registrado'}, status=404)
+
+    except Exception as e:
+        logger.exception("Error inesperado en api_buscar_por_codigo")
+        return JsonResponse({'error': 'Error interno del servidor'}, status=500)

@@ -35,10 +35,12 @@ class CodigoBarras(models.Model):
     producto = models.ForeignKey(Producto, related_name="codigos_barras", on_delete=models.CASCADE)
     codigo = models.CharField(max_length=255, unique=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    usado = models.BooleanField(default=False)  # Para productos únicos
 
     def save(self, *args, **kwargs):
         if not self.codigo:
-            self.codigo = str(uuid.uuid4())  # Genera un código único si no existe
+            last = CodigoBarras.objects.filter(producto=self.producto).count() + 1
+            self.codigo = f"{self.producto.id}{last:06d}"  # ej: "12000001"
         super().save(*args, **kwargs)
 
     def __str__(self):

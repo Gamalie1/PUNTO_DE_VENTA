@@ -70,24 +70,32 @@ def eliminar_producto(request, pk):
 
 def dibujar_etiqueta(c, x, y, producto, codigo_barras, ancho=90*mm, alto=35*mm):
     """Dibuja una etiqueta con la información del producto y su código de barras"""
-    
-    # Marco de la etiqueta
     c.roundRect(x, y, ancho, alto, 4, stroke=1, fill=0)
 
     # Nombre del producto
-    nombre = producto.nombre[:28]  # Cortar el nombre si es largo
+    nombre = producto.nombre[:28]
     c.setFont("Helvetica-Bold", 10)
     c.drawString(x + 4*mm, y + alto - 7*mm, nombre)
 
-    # Precio del producto
+    # Precio
     c.setFont("Helvetica-Bold", 10)
     c.drawString(x + 4*mm, y + alto - 14*mm, f"Precio: ${producto.precio}")
 
-    # Generación del código de barras
-    barcode = code128.Code128(codigo_barras, barHeight=10*mm, barWidth=0.4)  # Ajuste de tamaño
-    barcode.drawOn(c, x + 4*mm, y + 8*mm)  # Dibujamos el código de barras en la etiqueta
+    # *** CÓDIGO DE BARRAS MEJORADO ***
+    # Usar barWidth en milímetros (0.3 mm es un buen grosor)
+    # barHeight de 12 mm asegura que sea fácil de escanear
+    bc = code128.Code128(codigo_barras,
+                         barHeight=12*mm,   # más alto = mejor lectura
+                         barWidth=0.3*mm)   # grosor de línea en mm
+    # Dibujar en coordenadas ajustadas (dejando márgenes)
+    bc_x = x + 4*mm
+    bc_y = y + 5*mm   # espacio suficiente para el texto inferior
+    bc.drawOn(c, bc_x, bc_y)
+
+    # Texto legible del código (opcional pero útil)
     c.setFont("Helvetica", 6)
-    c.drawString(x + 4*mm, y + 4*mm, codigo_barras[:35])  # Código de barras debajo
+    c.drawString(x + 4*mm, y + 2*mm, codigo_barras[:20])  # mostrar primeros 20 caracteres
+    
 
 def producto_etiqueta_pdf(request, pk):
     # Obtener el producto que se va a etiquetar

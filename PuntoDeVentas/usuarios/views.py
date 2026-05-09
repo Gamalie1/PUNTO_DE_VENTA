@@ -18,6 +18,7 @@ from inventario.models import Producto
 from clientes.models import Cliente
 from compras.models import CompraGeneral
 from django.contrib.auth.forms import PasswordChangeForm
+from caja.models import Caja
 
 def index(request):
     # ========== DATOS GENERALES ==========
@@ -291,8 +292,35 @@ class LoginUsuarioView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        return reverse_lazy("usuarios:informacion")
+        user = self.request.user   # tu Usuario personalizado (con campo rol)
 
+        if user.rol == 'ADMIN':
+            return reverse_lazy('usuarios:informacion')
+
+        elif user.rol == 'CAJERO':
+            # Verificar si este usuario tiene alguna caja abierta (cerrado=False)
+            tiene_caja_abierta = Caja.objects.filter(
+                usuario_apertura=user,
+                cerrado=False
+            ).exists()
+            if tiene_caja_abierta:
+                return reverse_lazy('punto_venta')
+            else:
+                return reverse_lazy('caja_create')
+
+        elif user.rol == 'ALMACEN':
+            # Misma lógica (puedes cambiarla si almacén verifica otro modelo)
+            tiene_caja_abierta = Caja.objects.filter(
+                usuario_apertura=user,
+                cerrado=False
+            ).exists()
+            if tiene_caja_abierta:
+                return reverse_lazy('punto_venta')
+            else:
+                return reverse_lazy('caja_create')
+
+        else:
+            return reverse_lazy('usuarios:informacion')
 
 class LogoutUsuarioView(LogoutView):
     next_page = reverse_lazy("login")
