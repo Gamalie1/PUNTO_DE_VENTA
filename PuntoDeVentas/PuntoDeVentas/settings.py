@@ -86,8 +86,12 @@ WSGI_APPLICATION = 'PuntoDeVentas.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'punto_de_venta_db',
+        'USER': 'administrador',
+        'PASSWORD': '***PASSWORD_REMOVIDA***',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
