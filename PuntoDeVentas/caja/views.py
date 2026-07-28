@@ -103,23 +103,6 @@ class CajaDetailView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('caja_list')  # Redirigir a la lista de cajas después de guardar los cambios
 
 
-
-
-# Vista para los detalles de una caja y para cerrarla
-class CajaDetailView(LoginRequiredMixin, UpdateView):
-    model = Caja
-    template_name = 'caja_detail.html'
-    fields = ['nombre', 'saldo_actual', 'cerrado']  # Los campos que se van a mostrar
-    context_object_name = 'caja'
-
-    def form_valid(self, form):
-        if form.instance.cerrado and not form.instance.fecha_cierre:
-            form.instance.cerrar_caja()  # Cierra la caja si se marca como cerrada
-        return super().form_valid(form)
-
-    success_url = reverse_lazy('caja_list')  # Redirigir a la lista de cajas después de guardar los cambios
-    
-
 @login_required
 def registrar_corte_caja(request, caja_id):
     caja = get_object_or_404(Caja, id=caja_id, cerrado=False)
@@ -188,26 +171,6 @@ def registrar_corte_caja(request, caja_id):
         'total_transacciones': transacciones.count(),
         'total_ventas_count': ventas.count(),
     })
-
-class CorteCajaListView(LoginRequiredMixin, ListView):
-    model = CorteCaja
-    template_name = 'corte_caja_list.html'
-    context_object_name = 'cortes'
-    paginate_by = 10  # Opcional: Paginación
-
-    def get_queryset(self):
-        # Obtener el ID de la caja desde la URL
-        caja_id = self.kwargs['caja_id']
-
-        # Filtrar los cortes de caja por la caja seleccionada
-        return CorteCaja.objects.filter(caja_id=caja_id)
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Obtener la caja seleccionada por su ID
-        caja_id = self.kwargs['caja_id']
-        context['caja'] = Caja.objects.get(id=caja_id)
-        return context
 
 class CorteCajaListView(LoginRequiredMixin, ListView):
     model = CorteCaja

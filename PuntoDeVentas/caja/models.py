@@ -63,6 +63,9 @@ class Transaccion(models.Model):
 class CorteCaja(models.Model):
     caja = models.ForeignKey(Caja, on_delete=models.CASCADE, related_name='cortes')
     transacciones = models.ManyToManyField(Transaccion, blank=True)
+    # Periodo que cubre el corte (desde la apertura de la caja hasta el momento del corte).
+    fecha_inicio = models.DateTimeField(null=True, blank=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
     saldo_inicial = models.DecimalField(max_digits=10, decimal_places=2)
     ingresos = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     egresos = models.DecimalField(max_digits=10, decimal_places=2, default=0)

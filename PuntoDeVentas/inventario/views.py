@@ -180,6 +180,25 @@ def producto_etiqueta_pdf(request, pk):
 
 
 
+def _marcar_codigos_usados(producto, cantidad):
+    """Marca como usados los codigos de barras disponibles de un producto unico.
+
+    Antes este ajuste borraba filas de CodigoBarras sin filtrar por 'usado',
+    lo que podia eliminar codigos ya vendidos (se perdia la trazabilidad) y,
+    para productos NO unicos (que solo tienen un codigo de barras compartido),
+    podia borrar ese unico codigo y dejar el producto sin codigo escaneable.
+    Por eso esto solo aplica a productos unicos y solo toca codigos libres.
+    """
+    if not producto.es_unico:
+        return
+    codigos_ids = list(
+        CodigoBarras.objects.filter(producto=producto, usado=False)
+        .order_by('fecha_creacion')
+        .values_list('id', flat=True)[:cantidad]
+    )
+    CodigoBarras.objects.filter(id__in=codigos_ids).update(usado=True)
+
+
 @rol_required('ADMIN', 'ALMACEN')
 def agregar_stock(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
@@ -225,11 +244,7 @@ def agregar_stock(request, pk):
                     comentario=comentario
                 )
 
-                # Eliminar los códigos de barras correspondientes si el stock se ha reducido
-                
-                codigos_a_eliminar = CodigoBarras.objects.filter(producto=producto)[:cantidad]
-                # Eliminar sin usar limit/offset
-                CodigoBarras.objects.filter(id__in=[codigo.id for codigo in codigos_a_eliminar]).delete()
+                _marcar_codigos_usados(producto, cantidad)
 
                 messages.success(request, f'Se redujeron {cantidad} unidades de {producto.nombre}.')
             elif tipo_cambio == 'ajuste' and producto.stock >= cantidad:
@@ -245,10 +260,7 @@ def agregar_stock(request, pk):
                     comentario=comentario
                 )
 
-                # Eliminar los códigos de barras correspondientes si el stock se ha ajustado
-                codigos_a_eliminar = CodigoBarras.objects.filter(producto=producto)[:cantidad]
-                # Eliminar sin usar limit/offset
-                CodigoBarras.objects.filter(id__in=[codigo.id for codigo in codigos_a_eliminar]).delete()
+                _marcar_codigos_usados(producto, cantidad)
 
                 messages.success(request, f'Ajuste: Se redujeron {cantidad} unidades de {producto.nombre}.')
             else:

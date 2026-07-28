@@ -93,6 +93,12 @@ def punto_venta(request):
                             raise ValueError(f"Algún código de barras de {producto.nombre} ya fue usado o es inválido")
                         # Marcar como usados
                         codigos.update(usado=True)
+                        # Mantener sincronizado el contador de stock con los
+                        # codigos de barras realmente disponibles (antes quedaba
+                        # desactualizado para productos unicos y rompia las
+                        # alertas de stock bajo/agotado del dashboard).
+                        producto.stock = max(producto.stock - cantidad, 0)
+                        producto.save(update_fields=['stock'])
                     else:
                         # Producto no único: validar stock
                         if producto.stock < cantidad:
