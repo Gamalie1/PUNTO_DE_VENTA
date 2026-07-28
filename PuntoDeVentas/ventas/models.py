@@ -18,6 +18,7 @@ class Venta(models.Model):
     cambio = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     caja = models.ForeignKey('caja.Caja', on_delete=models.SET_NULL, null=True, blank=True)
+    ruta = models.ForeignKey('rutas.Ruta', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas')
     
   
     def save(self, *args, **kwargs):

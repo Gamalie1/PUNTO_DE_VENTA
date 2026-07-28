@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+{% block title %}Asignar productos{% endblock %}
+
+{% block content %}
+<section class="content">
+<div class="container-fluid">
+<div class="row justify-content-center">
+<div class="col-lg-6">
+
+<div class="card card-info shadow">
+    <div class="card-header">
+        <h3 class="card-title"><i class="fas fa-clipboard-list mr-2"></i> Asignar producto a un vendedor</h3>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="card-body">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger">
+                {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label>{{ form.vendedor.label }}</label>
+                {{ form.vendedor|add_class:"form-control" }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.ruta.label }}</label>
+                {{ form.ruta|add_class:"form-control" }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.producto.label }}</label>
+                {{ form.producto|add_class:"form-control" }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.fecha.label }}</label>
+                {{ form.fecha|add_class:"form-control" }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.cantidad_asignada.label }}</label>
+                {{ form.cantidad_asignada|add_class:"form-control" }}
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-info">
+                <i class="fas fa-save mr-1"></i> Asignar
+            </button>
+            <a href="{% url 'rutas:asignacion_list' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left mr-1"></i> Volver
+            </a>
+        </div>
+    </form>
+</div>
+
+</div>
+</div>
+</div>
+</section>
+{% endblock %}

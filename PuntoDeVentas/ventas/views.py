@@ -31,6 +31,9 @@ from caja.models import Transaccion
 from django.contrib.auth.mixins import LoginRequiredMixin
 import logging
 from django.views.decorators.http import require_http_methods
+from django.utils import timezone
+from rutas.models import Ruta, AsignacionDiaria
+from rutas.services import calcular_progreso_asignaciones
 # Create your views here.
 
 @login_required
@@ -41,16 +44,34 @@ def punto_venta(request):
     # no se le pide llenar ningun formulario antes de poder vender.
     caja_abierta = obtener_o_abrir_caja_del_dia(request.user)
 
+    hoy = timezone.localdate()
+    # Rutas asignadas hoy a este vendedor (si no tiene ninguna, simplemente
+    # no se le muestra el selector y sus ventas quedan sin ruta, como antes).
+    rutas_hoy = Ruta.objects.filter(
+        asignaciones__vendedor=request.user, asignaciones__fecha=hoy
+    ).distinct()
+    mis_asignaciones = calcular_progreso_asignaciones(
+        AsignacionDiaria.objects.filter(vendedor=request.user, fecha=hoy)
+        .select_related('ruta', 'producto')
+    )
+
+    contexto_base = {
+        "productos": productos,
+        "clientes": clientes,
+        "rutas_hoy": rutas_hoy,
+        "mis_asignaciones": mis_asignaciones,
+    }
+
     if request.method == "POST":
         carrito_json = request.POST.get("carrito")
         monto_pagado = request.POST.get("monto_pagado")
         cambio = request.POST.get("cambio")
         cliente_id = request.POST.get("cliente_id")
+        ruta_id = request.POST.get("ruta_id")
 
         if not carrito_json:
             return render(request, "punto_venta.html", {
-                "productos": productos,
-                "clientes": clientes,
+                **contexto_base,
                 "mensaje_error": "Carrito vacío"
             })
 
@@ -63,6 +84,12 @@ def punto_venta(request):
                     total=0,
                     caja=caja_abierta
                 )
+
+                if ruta_id:
+                    try:
+                        venta.ruta = Ruta.objects.get(id=ruta_id)
+                    except Ruta.DoesNotExist:
+                        pass
 
                 if cliente_id and cliente_id != '':
                     try:
@@ -115,8 +142,7 @@ def punto_venta(request):
                 if total_venta == 0:
                     venta.delete()
                     return render(request, "punto_venta.html", {
-                        "productos": productos,
-                        "clientes": clientes,
+                        **contexto_base,
                         "mensaje_error": "No se pudo procesar la venta (total cero)"
                     })
 
@@ -136,8 +162,7 @@ def punto_venta(request):
                 )
 
                 return render(request, "punto_venta.html", {
-                    "productos": productos,
-                    "clientes": clientes,
+                    **contexto_base,
                     "success": True,
                     "venta_id": venta.id
                 })
@@ -145,12 +170,11 @@ def punto_venta(request):
         except Exception as e:
             # Si ocurre un error, mostrar mensaje adecuado
             return render(request, "punto_venta.html", {
-                "productos": productos,
-                "clientes": clientes,
+                **contexto_base,
                 "mensaje_error": str(e)
             })
 
-    return render(request, "punto_venta.html", {"productos": productos, "clientes": clientes})
+    return render(request, "punto_venta.html", contexto_base)
 
 class VentaListView(LoginRequiredMixin, ListView):
     model = Venta

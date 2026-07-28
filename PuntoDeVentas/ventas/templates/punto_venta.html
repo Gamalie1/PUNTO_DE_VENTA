@@ -73,6 +73,41 @@
 
 <section class="content">
   <div class="container-fluid">
+
+    {% if mis_asignaciones %}
+    <div class="card shadow mb-3">
+      <div class="card-header bg-info text-white py-2">
+        <h6 class="mb-0"><i class="fas fa-route"></i> Lo que tengo asignado hoy</h6>
+      </div>
+      <div class="card-body py-2">
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead>
+              <tr><th>Producto</th><th>Ruta</th><th>Asignado</th><th>Vendido</th><th>Restante</th></tr>
+            </thead>
+            <tbody>
+              {% for asignacion in mis_asignaciones %}
+              <tr>
+                <td>{{ asignacion.producto.nombre }}</td>
+                <td>{{ asignacion.ruta.nombre }}</td>
+                <td>{{ asignacion.cantidad_asignada }}</td>
+                <td>{{ asignacion.vendido }}</td>
+                <td>
+                  {% if asignacion.restante == 0 %}
+                  <span class="badge badge-success">Completo</span>
+                  {% else %}
+                  <span class="badge badge-warning">{{ asignacion.restante }}</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <div class="row">
       <!-- PRODUCTOS -->
       <div class="col-md-7">
@@ -148,9 +183,19 @@
 
             <form method="POST" id="formVenta" onsubmit="return prepararEnvio();">
               {% csrf_token %}
+              {% if rutas_hoy %}
+              <div class="form-group px-3">
+                <label class="text-muted mb-1"><i class="fas fa-route"></i> Ruta de esta venta</label>
+                <select name="ruta_id" class="form-control form-control-sm">
+                  {% for ruta in rutas_hoy %}
+                  <option value="{{ ruta.id }}">{{ ruta.nombre }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              {% endif %}
               <input type="hidden" name="carrito" id="carrito-input">
               <input type="hidden" name="monto_pagado" id="monto_pagado_input">
-              <input type="hidden" name="cliente_id" id="cliente_id_input"> 
+              <input type="hidden" name="cliente_id" id="cliente_id_input">
               <input type="hidden" name="cambio" id="cambio_input">
 
               <button type="button" id="btnCobrar" class="btn btn-success btn-lg btn-block shadow">

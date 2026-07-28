@@ -194,6 +194,30 @@
     </li>
     {% endif %}
 
+    <!-- Rutas y asignaciones diarias -->
+    {% if user_es_admin %}
+    <li class="nav-item has-treeview">
+      <a href="#" class="nav-link {% if request.resolver_match.app_name == 'rutas' %}active{% endif %}">
+        <i class="nav-icon fas fa-route"></i>
+        <p>Rutas <i class="right fas fa-angle-left"></i></p>
+      </a>
+      <ul class="nav nav-treeview">
+        <li class="nav-item">
+          <a href="{% url 'rutas:asignacion_list' %}" class="nav-link {% if request.resolver_match.url_name == 'asignacion_list' %}active{% endif %}">
+            <i class="far fa-circle nav-icon"></i>
+            <p>Asignaciones del día</p>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'rutas:ruta_list' %}" class="nav-link {% if request.resolver_match.url_name == 'ruta_list' %}active{% endif %}">
+            <i class="far fa-circle nav-icon"></i>
+            <p>Rutas</p>
+          </a>
+        </li>
+      </ul>
+    </li>
+    {% endif %}
+
   </ul>
 </nav>
       <!-- /.sidebar-menu -->
