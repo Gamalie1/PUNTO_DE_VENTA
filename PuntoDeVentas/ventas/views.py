@@ -216,16 +216,18 @@ class VentaListView(LoginRequiredMixin, ListView):
         context['fecha'] = self.request.GET.get('fecha', '')
         return context
     
-class VentaDetailView(DetailView):
+class VentaDetailView(LoginRequiredMixin, DetailView):
     model = Venta
     template_name = 'venta_detail.html'
     context_object_name = 'venta'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Agregar los detalles de la venta a la variable de contexto
-        venta = self.get_object()
-        context['detalles'] = venta.detalles.all()  # Obtener los productos de la venta
+        # self.object ya esta cargado por DetailView.get(); volver a llamar
+        # a self.get_object() aqui repetiria la consulta a la base de datos.
+        # select_related('producto') evita una consulta extra por cada
+        # linea de la venta al renderizar detalle.producto.nombre.
+        context['detalles'] = self.object.detalles.select_related('producto').all()
         return context
     
 @login_required

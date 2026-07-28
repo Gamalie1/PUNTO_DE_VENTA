@@ -56,9 +56,17 @@ class Transaccion(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
     venta = models.ForeignKey('ventas.Venta', on_delete=models.SET_NULL, null=True, blank=True, related_name='transacciones')
 
+    class Meta:
+        indexes = [
+            # Los cortes de caja (manuales y el cierre automatico) filtran
+            # transacciones por caja + rango de fecha en cada corte.
+            models.Index(fields=['fecha']),
+            models.Index(fields=['caja', 'fecha']),
+        ]
+
     def __str__(self):
         return f"{self.tipo} - ${self.monto} ({self.fecha})"
-    
+
 
 class CorteCaja(models.Model):
     caja = models.ForeignKey(Caja, on_delete=models.CASCADE, related_name='cortes')
@@ -78,6 +86,17 @@ class CorteCaja(models.Model):
     usuario_cierre = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     fecha_corte = models.DateTimeField(auto_now_add=True)
     comentario = models.TextField(blank=True, null=True)  # Comentarios adicionales
+
+    class Meta:
+        # Sin esto, CorteCajaListView (que pagina) emite
+        # UnorderedObjectListWarning y puede repetir/saltar filas entre
+        # paginas porque Postgres no garantiza el orden sin ORDER BY.
+        ordering = ['-fecha_corte']
+        indexes = [
+            # Se consulta en cada intento de corte para evitar duplicados
+            # del mismo dia (fecha_corte__date=hoy).
+            models.Index(fields=['fecha_corte']),
+        ]
 
     def __str__(self):
         return f"Corte de Caja - {self.caja.nombre} - {self.fecha_corte}"

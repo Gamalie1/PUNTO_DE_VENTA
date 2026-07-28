@@ -11,6 +11,12 @@ class Producto(models.Model):
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     es_unico = models.BooleanField(default=False)  # Indicamos si es único
 
+    class Meta:
+        indexes = [
+            # El dashboard consulta stock=0 y stock__lt=10 en cada carga.
+            models.Index(fields=['stock']),
+        ]
+
     def __str__(self):
         return self.nombre
 

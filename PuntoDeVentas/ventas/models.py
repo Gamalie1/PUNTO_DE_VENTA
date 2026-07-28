@@ -19,8 +19,15 @@ class Venta(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     caja = models.ForeignKey('caja.Caja', on_delete=models.SET_NULL, null=True, blank=True)
     ruta = models.ForeignKey('rutas.Ruta', on_delete=models.SET_NULL, null=True, blank=True, related_name='ventas')
-    
-  
+
+    class Meta:
+        indexes = [
+            # El dashboard, los listados y los cortes de caja filtran
+            # constantemente por rango de fecha (y por caja+fecha juntos).
+            models.Index(fields=['fecha']),
+            models.Index(fields=['caja', 'fecha']),
+        ]
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 

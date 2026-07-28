@@ -125,11 +125,13 @@ def registrar_corte_caja(request, caja_id):
     ).order_by('-fecha')
 
     # Ventas del período (para mostrar en template)
+    # select_related('cliente') evita una consulta extra por cada venta
+    # al renderizar venta.cliente.nombre en la tabla del corte.
     ventas = Venta.objects.filter(
         caja=caja,
         fecha__gte=fecha_inicio,
         fecha__lte=fecha_fin
-    ).order_by('-fecha')
+    ).select_related('cliente').order_by('-fecha')
 
     # Totales
     ingresos = transacciones.filter(tipo='INGRESO').aggregate(Sum('monto'))['monto__sum'] or 0
@@ -185,13 +187,15 @@ class CorteCajaListView(LoginRequiredMixin, ListView):
         caja_id = self.kwargs['caja_id']
 
         # Filtrar los cortes de caja por la caja seleccionada
-        return CorteCaja.objects.filter(caja_id=caja_id)
+        # select_related('caja') evita una consulta extra por cada fila
+        # al renderizar corte.caja.nombre en la tabla.
+        return CorteCaja.objects.filter(caja_id=caja_id).select_related('caja')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         # Obtener la caja seleccionada por su ID
         caja_id = self.kwargs['caja_id']
-        context['caja'] = Caja.objects.get(id=caja_id)
+        context['caja'] = get_object_or_404(Caja, id=caja_id)
         return context
 
 # Vista para mostrar los detalles de un corte de caja
@@ -199,6 +203,7 @@ class CorteCajaDetailView(LoginRequiredMixin, DetailView):
     model = CorteCaja
     template_name = 'corte_caja_detail.html'
     context_object_name = 'corte'
+    queryset = CorteCaja.objects.select_related('caja', 'usuario_cierre')
 
 @login_required
 def registrar_ingresos_egresos(request, caja_id):
