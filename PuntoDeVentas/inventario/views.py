@@ -3,6 +3,8 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.views.generic import ListView, CreateView
 from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+from usuarios.permissions import rol_required
 from .models import Producto, CodigoBarras, HistorialStock
 from .forms import ProductoForm
 from reportlab.pdfgen import canvas
@@ -13,6 +15,7 @@ from django.contrib import messages
 import uuid
 
 # Create your views here.
+@login_required
 def lista_productos(request):
     productos = Producto.objects.all().order_by('-fecha_creacion')
 
@@ -25,6 +28,7 @@ def lista_productos(request):
     return render(request, 'lista_productos.html', context)
 
 
+@rol_required('ADMIN', 'ALMACEN')
 def registrar_producto(request):
     if request.method == 'POST':
         # Si el formulario es enviado, procesamos los datos
@@ -44,6 +48,7 @@ def registrar_producto(request):
     return render(request, 'crear_producto.html', {'form': form})
 
 # Vista para editar producto
+@rol_required('ADMIN', 'ALMACEN')
 def editar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     
@@ -62,6 +67,7 @@ def editar_producto(request, pk):
 
 
 # Vista para eliminar producto
+@rol_required('ADMIN', 'ALMACEN')
 def eliminar_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
     producto.delete()
@@ -97,6 +103,7 @@ def dibujar_etiqueta(c, x, y, producto, codigo_barras, ancho=90*mm, alto=35*mm):
     c.drawString(x + 4*mm, y + 2*mm, codigo_barras[:20])  # mostrar primeros 20 caracteres
     
 
+@login_required
 def producto_etiqueta_pdf(request, pk):
     # Obtener el producto que se va a etiquetar
     producto = get_object_or_404(Producto, pk=pk)
@@ -173,6 +180,7 @@ def producto_etiqueta_pdf(request, pk):
 
 
 
+@rol_required('ADMIN', 'ALMACEN')
 def agregar_stock(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
 

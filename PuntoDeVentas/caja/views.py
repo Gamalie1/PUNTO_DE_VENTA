@@ -16,6 +16,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from weasyprint import HTML
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 
 class CajaListView(LoginRequiredMixin, ListView):
     model = Caja
@@ -66,7 +67,7 @@ class CajaCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 # Vista para registrar ingresos/egresos
-class TransaccionCreateView(CreateView):
+class TransaccionCreateView(LoginRequiredMixin, CreateView):
     model = Transaccion
     template_name = 'transaccion_form.html'
     fields = ['caja', 'tipo', 'monto', 'descripcion']
@@ -88,7 +89,7 @@ class TransaccionCreateView(CreateView):
 
 
 # Vista para los detalles de una caja y para cerrarla
-class CajaDetailView(UpdateView):
+class CajaDetailView(LoginRequiredMixin, UpdateView):
     model = Caja
     template_name = 'caja_detail.html'
     fields = ['nombre', 'saldo_actual', 'cerrado']  # Los campos que se van a mostrar
@@ -105,7 +106,7 @@ class CajaDetailView(UpdateView):
 
 
 # Vista para los detalles de una caja y para cerrarla
-class CajaDetailView(UpdateView):
+class CajaDetailView(LoginRequiredMixin, UpdateView):
     model = Caja
     template_name = 'caja_detail.html'
     fields = ['nombre', 'saldo_actual', 'cerrado']  # Los campos que se van a mostrar
@@ -119,6 +120,7 @@ class CajaDetailView(UpdateView):
     success_url = reverse_lazy('caja_list')  # Redirigir a la lista de cajas después de guardar los cambios
     
 
+@login_required
 def registrar_corte_caja(request, caja_id):
     caja = get_object_or_404(Caja, id=caja_id, cerrado=False)
     
@@ -187,7 +189,7 @@ def registrar_corte_caja(request, caja_id):
         'total_ventas_count': ventas.count(),
     })
 
-class CorteCajaListView(ListView):
+class CorteCajaListView(LoginRequiredMixin, ListView):
     model = CorteCaja
     template_name = 'corte_caja_list.html'
     context_object_name = 'cortes'
@@ -207,7 +209,7 @@ class CorteCajaListView(ListView):
         context['caja'] = Caja.objects.get(id=caja_id)
         return context
 
-class CorteCajaListView(ListView):
+class CorteCajaListView(LoginRequiredMixin, ListView):
     model = CorteCaja
     template_name = 'corte_caja_list.html'
     context_object_name = 'cortes'
@@ -228,11 +230,12 @@ class CorteCajaListView(ListView):
         return context
 
 # Vista para mostrar los detalles de un corte de caja
-class CorteCajaDetailView(DetailView):
+class CorteCajaDetailView(LoginRequiredMixin, DetailView):
     model = CorteCaja
     template_name = 'corte_caja_detail.html'
     context_object_name = 'corte'
 
+@login_required
 def registrar_ingresos_egresos(request, caja_id):
     caja = get_object_or_404(Caja, id=caja_id)
 
@@ -295,6 +298,7 @@ def registrar_ingresos_egresos(request, caja_id):
         'cortes': cortes
     })
 
+@login_required
 def generar_pdf_corte(request, corte_id):
     corte = CorteCaja.objects.get(id=corte_id)
     
@@ -321,6 +325,7 @@ def generar_pdf_corte(request, corte_id):
     
     return response
 
+@login_required
 def ticket_corte(request, corte_id):
     corte = CorteCaja.objects.get(id=corte_id)
     transacciones = corte.transacciones.all()

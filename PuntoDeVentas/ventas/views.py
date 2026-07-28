@@ -29,7 +29,6 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import inch
 from caja.models import Transaccion
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views.decorators.csrf import csrf_exempt
 import logging
 from django.views.decorators.http import require_http_methods
 # Create your views here.
@@ -204,6 +203,7 @@ class VentaDetailView(DetailView):
         context['detalles'] = venta.detalles.all()  # Obtener los productos de la venta
         return context
     
+@login_required
 def guardar_pago(request):
     if request.method == 'POST':
         # Obtener el venta_id del formulario
@@ -248,9 +248,10 @@ def guardar_pago(request):
 
     return JsonResponse({'success': False, 'message': 'Error al procesar el pago.'})
 
+@login_required
 def descargar_ticket(request, venta_id):
-    venta = Venta.objects.get(id=venta_id)
-    detalles = DetalleVenta.objects.filter(venta=venta)
+    venta = get_object_or_404(Venta, id=venta_id)
+    detalles = DetalleVenta.objects.filter(venta=venta).select_related('producto')
 
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="ticket_{venta.id}.pdf"'
@@ -393,9 +394,10 @@ def descargar_ticket(request, venta_id):
 
 
 
+@login_required
 def imprimir_ticket(request, venta_id):
-    venta = Venta.objects.get(id=venta_id)
-    detalles = DetalleVenta.objects.filter(venta=venta)
+    venta = get_object_or_404(Venta, id=venta_id)
+    detalles = DetalleVenta.objects.filter(venta=venta).select_related('producto')
     
     # Obtener el mensaje del ticket de la sucursal
     sucursal = Sucursal.objects.first()  # Asumimos que solo tienes una sucursal
@@ -413,8 +415,8 @@ def imprimir_ticket(request, venta_id):
 
 
 logger = logging.getLogger(__name__)
+@login_required
 @require_http_methods(["GET"])
-@csrf_exempt   # Por simplicidad en pruebas; después usa @require_http_methods y token CSRF
 def api_buscar_por_codigo(request):
     codigo = request.GET.get('codigo', '').strip()
     if not codigo:

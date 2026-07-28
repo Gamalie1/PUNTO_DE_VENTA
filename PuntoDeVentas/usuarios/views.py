@@ -19,7 +19,9 @@ from clientes.models import Cliente
 from compras.models import CompraGeneral
 from django.contrib.auth.forms import PasswordChangeForm
 from caja.models import Caja
+from .permissions import rol_required, RolRequiredMixin
 
+@rol_required('ADMIN')
 def index(request):
     # ========== DATOS GENERALES ==========
     fecha_actual = timezone.now()
@@ -204,12 +206,13 @@ def index(request):
     
     return render(request, 'index.html', context)
 
-class UsuarioListView( ListView):
+class UsuarioListView(RolRequiredMixin, ListView):
+    roles_permitidos = ('ADMIN',)
     model = Usuario
     template_name = "lista_usuarios.html"
 
 
-@login_required
+@rol_required('ADMIN')
 def crear_usuario(request):
     if request.method == "POST":
         form = UsuarioForm(request.POST)
@@ -275,7 +278,8 @@ class UsuarioUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return super().form_invalid(form)
 
 
-class UsuarioDeleteView(LoginRequiredMixin, DeleteView):
+class UsuarioDeleteView(RolRequiredMixin, DeleteView):
+    roles_permitidos = ('ADMIN',)
     model = Usuario
     template_name = "eliminar.html"
     success_url = reverse_lazy("usuarios:usuarios_lista")
