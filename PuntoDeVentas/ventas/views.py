@@ -4,7 +4,7 @@ from inventario.models import Producto, CodigoBarras
 from .models import Venta, DetalleVenta
 from sucursal.models import Sucursal
 from django.db import transaction
-from caja.models import Caja
+from caja.services import obtener_o_abrir_caja_del_dia
 import json
 from django.views.generic import ListView
 from django.views.generic import DetailView
@@ -37,14 +37,9 @@ from django.views.decorators.http import require_http_methods
 def punto_venta(request):
     productos = Producto.objects.all()
     clientes = Cliente.objects.all()
-    caja_abierta = Caja.objects.filter(cerrado=False).first()
-
-    if not caja_abierta:
-        return render(request, "punto_venta.html", {
-            "productos": productos,
-            "clientes": clientes,
-            "mensaje_error": "No hay ninguna caja abierta."
-        })
+    # La caja del vendedor se abre sola con su primera venta del dia:
+    # no se le pide llenar ningun formulario antes de poder vender.
+    caja_abierta = obtener_o_abrir_caja_del_dia(request.user)
 
     if request.method == "POST":
         carrito_json = request.POST.get("carrito")

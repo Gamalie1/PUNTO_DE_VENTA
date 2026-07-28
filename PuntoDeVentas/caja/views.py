@@ -17,6 +17,7 @@ from django.template.loader import render_to_string
 from weasyprint import HTML
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
+from usuarios.permissions import RolRequiredMixin
 
 class CajaListView(LoginRequiredMixin, ListView):
     model = Caja
@@ -53,7 +54,8 @@ class CajaListView(LoginRequiredMixin, ListView):
         
         return context
 
-class CajaCreateView(LoginRequiredMixin, CreateView):
+class CajaCreateView(RolRequiredMixin, CreateView):
+    roles_permitidos = ('ADMIN',)
     model = Caja
     template_name = 'caja_form.html'
     fields = ['nombre', 'saldo_inicial']

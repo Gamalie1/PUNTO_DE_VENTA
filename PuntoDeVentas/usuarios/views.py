@@ -18,7 +18,6 @@ from inventario.models import Producto
 from clientes.models import Cliente
 from compras.models import CompraGeneral
 from django.contrib.auth.forms import PasswordChangeForm
-from caja.models import Caja
 from .permissions import rol_required, RolRequiredMixin
 
 @rol_required('ADMIN')
@@ -301,27 +300,11 @@ class LoginUsuarioView(LoginView):
         if user.rol == 'ADMIN':
             return reverse_lazy('usuarios:informacion')
 
-        elif user.rol == 'CAJERO':
-            # Verificar si este usuario tiene alguna caja abierta (cerrado=False)
-            tiene_caja_abierta = Caja.objects.filter(
-                usuario_apertura=user,
-                cerrado=False
-            ).exists()
-            if tiene_caja_abierta:
-                return reverse_lazy('punto_venta')
-            else:
-                return reverse_lazy('caja_create')
-
-        elif user.rol == 'ALMACEN':
-            # Misma lógica (puedes cambiarla si almacén verifica otro modelo)
-            tiene_caja_abierta = Caja.objects.filter(
-                usuario_apertura=user,
-                cerrado=False
-            ).exists()
-            if tiene_caja_abierta:
-                return reverse_lazy('punto_venta')
-            else:
-                return reverse_lazy('caja_create')
+        elif user.rol in ('CAJERO', 'ALMACEN'):
+            # La caja del dia se abre sola con la primera venta
+            # (ver caja.services.obtener_o_abrir_caja_del_dia), asi que
+            # ya no hace falta mandarlo primero a un formulario de apertura.
+            return reverse_lazy('punto_venta')
 
         else:
             return reverse_lazy('usuarios:informacion')
