@@ -3,31 +3,16 @@
 {% load static %}
 
 {% block extra_css %}
-<!-- Chart.js CSS -->
 <style>
-  .small-box {
-    transition: transform 0.2s;
-  }
-  .small-box:hover {
-    transform: translateY(-5px);
-  }
-  .card-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  }
+  /* El estilo general de .small-box (radio, sombra, hover) ya lo pone
+     pos-design-system.css; aqui solo lo especifico de esta pantalla. */
   .grafico-container {
     position: relative;
     height: 300px;
   }
-  .info-box-icon {
-    font-size: 2rem;
-  }
   .top-productos tr:hover {
-    background-color: rgba(0,123,255,0.05);
+    background-color: var(--pos-primary-light);
     cursor: pointer;
-  }
-  .badge-stock {
-    font-size: 0.85rem;
-    padding: 0.35rem 0.65rem;
   }
 </style>
 {% endblock %}
@@ -365,20 +350,33 @@
   </div>
 </section>
 
+{% comment %}
+Datos para Chart.js pasados como JSON seguro (evita el patron |safe,
+fragil si algun dia estos datos incluyen texto libre como nombres).
+{% endcomment %}
+{{ dias|json_script:"data-dias" }}
+{{ ventas_dias|json_script:"data-ventas-dias" }}
+{{ semanas|json_script:"data-semanas" }}
+{{ ventas_semanas|json_script:"data-ventas-semanas" }}
+{{ meses|json_script:"data-meses" }}
+{{ ventas_meses|json_script:"data-ventas-meses" }}
+{{ años|json_script:"data-anios" }}
+{{ ventas_años|json_script:"data-ventas-anios" }}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    
+    const leerDatos = (id) => JSON.parse(document.getElementById(id).textContent);
+
     // Gráfico por días
     const ctxDias = document.getElementById('graficoDias').getContext('2d');
     new Chart(ctxDias, {
       type: 'line',
       data: {
-        labels: {{ dias|safe }},
+        labels: leerDatos('data-dias'),
         datasets: [{
           label: 'Ventas ($)',
-          data: {{ ventas_dias|safe }},
+          data: leerDatos('data-ventas-dias'),
           borderColor: 'rgba(23, 162, 184, 1)',
           backgroundColor: 'rgba(23, 162, 184, 0.1)',
           borderWidth: 2,
@@ -407,10 +405,10 @@
     new Chart(ctxSemanas, {
       type: 'bar',
       data: {
-        labels: {{ semanas|safe }},
+        labels: leerDatos('data-semanas'),
         datasets: [{
           label: 'Ventas ($)',
-          data: {{ ventas_semanas|safe }},
+          data: leerDatos('data-ventas-semanas'),
           backgroundColor: 'rgba(40, 167, 69, 0.7)',
           borderColor: 'rgba(40, 167, 69, 1)',
           borderWidth: 1
@@ -436,10 +434,10 @@
     new Chart(ctxMeses, {
       type: 'line',
       data: {
-        labels: {{ meses|safe }},
+        labels: leerDatos('data-meses'),
         datasets: [{
           label: 'Ventas ($)',
-          data: {{ ventas_meses|safe }},
+          data: leerDatos('data-ventas-meses'),
           borderColor: 'rgba(255, 193, 7, 1)',
           backgroundColor: 'rgba(255, 193, 7, 0.1)',
           borderWidth: 2,
@@ -467,10 +465,10 @@
     new Chart(ctxAnios, {
       type: 'bar',
       data: {
-        labels: {{ años|safe }},
+        labels: leerDatos('data-anios'),
         datasets: [{
           label: 'Ventas ($)',
-          data: {{ ventas_años|safe }},
+          data: leerDatos('data-ventas-anios'),
           backgroundColor: 'rgba(220, 53, 69, 0.7)',
           borderColor: 'rgba(220, 53, 69, 1)',
           borderWidth: 1

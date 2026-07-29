@@ -20,12 +20,15 @@
   <link rel="stylesheet" href="/static/plugins/jqvmap/jqvmap.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="/static/dist/css/adminlte.min.css">
+  <!-- Sistema de diseno propio del POS (overrides de marca sobre AdminLTE) -->
+  <link rel="stylesheet" href="/static/css/pos-design-system.css">
   <!-- overlayScrollbars -->
   <link rel="stylesheet" href="/static/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
   <!-- Daterange picker -->
   <link rel="stylesheet" href="/static/plugins/daterangepicker/daterangepicker.css">
   <!-- summernote -->
   <link rel="stylesheet" href="/static/plugins/summernote/summernote-bs4.min.css">
+  {% block extra_css %}{% endblock %}
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
 <div class="wrapper">
@@ -335,6 +338,8 @@
         {% endif %}
     {% endfor %}
 {% endif %}
+
+{% block extra_js %}{% endblock %}
 
 </body>
 </html>

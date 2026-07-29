@@ -1,0 +1,192 @@
+/*
+ * Sistema de diseno del POS.
+ *
+ * Se carga DESPUES de adminlte.min.css a proposito: son overrides
+ * dirigidos sobre AdminLTE 3 / Bootstrap 4 (no un framework nuevo), asi
+ * que ganan por orden de cascada sin necesitar !important en casi nada.
+ * Los tokens (variables) son el punto unico de verdad para color,
+ * tipografia y espaciado -- cambiar la marca es cambiar esta seccion.
+ */
+
+:root {
+  --pos-primary: #2f6fed;
+  --pos-primary-dark: #1e4fc0;
+  --pos-primary-light: #eaf0fe;
+  --pos-success: #16a34a;
+  --pos-success-dark: #0f7a37;
+  --pos-warning: #f59e0b;
+  --pos-danger: #e11d48;
+  --pos-info: #0ea5e9;
+
+  --pos-bg: #f3f5f9;
+  --pos-surface: #ffffff;
+  --pos-border: #e5e9f0;
+  --pos-text: #1e293b;
+  --pos-text-muted: #6b7280;
+
+  --pos-radius: 12px;
+  --pos-radius-sm: 8px;
+  --pos-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --pos-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.10);
+
+  --pos-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+body, .content-wrapper {
+  font-family: var(--pos-font);
+  color: var(--pos-text);
+  background-color: var(--pos-bg);
+}
+
+/* ===== Marca / color primario ===== */
+.bg-primary,
+.badge-primary,
+.btn-primary {
+  background-color: var(--pos-primary) !important;
+  border-color: var(--pos-primary) !important;
+}
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--pos-primary-dark) !important;
+  border-color: var(--pos-primary-dark) !important;
+}
+.text-primary { color: var(--pos-primary) !important; }
+
+.btn-success { background-color: var(--pos-success); border-color: var(--pos-success); }
+.btn-success:hover, .btn-success:focus { background-color: var(--pos-success-dark); border-color: var(--pos-success-dark); }
+
+/* ===== Resto de la paleta semantica (mas plana/moderna que el Bootstrap 4 por defecto) ===== */
+.bg-success, .badge-success { background-color: var(--pos-success) !important; }
+.bg-info, .badge-info { background-color: var(--pos-info) !important; }
+.bg-warning, .badge-warning { background-color: var(--pos-warning) !important; }
+.bg-danger, .badge-danger { background-color: var(--pos-danger) !important; }
+.text-success { color: var(--pos-success) !important; }
+.text-danger { color: var(--pos-danger) !important; }
+
+.bg-gradient-primary { background: linear-gradient(135deg, var(--pos-primary), var(--pos-primary-dark)) !important; }
+.bg-gradient-success { background: linear-gradient(135deg, var(--pos-success), var(--pos-success-dark)) !important; }
+.bg-gradient-info { background: linear-gradient(135deg, var(--pos-info), #0369a1) !important; }
+.bg-gradient-warning { background: linear-gradient(135deg, var(--pos-warning), #b45309) !important; }
+.bg-gradient-danger { background: linear-gradient(135deg, var(--pos-danger), #9f1239) !important; }
+
+/* ===== Botones: mas redondeados, sin mayusculas forzadas ===== */
+.btn {
+  border-radius: var(--pos-radius-sm);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.btn-lg { border-radius: var(--pos-radius); }
+
+/* ===== Tarjetas ===== */
+.card {
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radius);
+  box-shadow: var(--pos-shadow);
+}
+.card-header {
+  border-top-left-radius: var(--pos-radius) !important;
+  border-top-right-radius: var(--pos-radius) !important;
+  border-bottom: 1px solid var(--pos-border);
+}
+
+/* ===== Sidebar ===== */
+.main-sidebar {
+  background-color: #14213d;
+}
+.nav-sidebar > .nav-item > .nav-link.active {
+  background-color: var(--pos-primary);
+  border-radius: var(--pos-radius-sm);
+}
+.nav-sidebar .nav-link:hover {
+  border-radius: var(--pos-radius-sm);
+}
+
+/* ===== Tarjetas KPI del dashboard (.small-box de AdminLTE) ===== */
+.small-box {
+  border-radius: var(--pos-radius);
+  box-shadow: var(--pos-shadow);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.small-box:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--pos-shadow-md);
+}
+.small-box > .icon {
+  opacity: .35;
+}
+
+/* ===== Tablas ===== */
+.table thead th {
+  text-transform: uppercase;
+  font-size: .72rem;
+  letter-spacing: .04em;
+  color: var(--pos-text-muted);
+  border-bottom-width: 1px;
+  background-color: #fafbfd;
+}
+
+/* ===== Badges tipo "pill" ===== */
+.badge {
+  border-radius: 999px;
+  padding: .35em .7em;
+  font-weight: 600;
+}
+
+/* ===== Utilidades para vistas tactiles (punto de venta, tarjetas de producto) ===== */
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: .75rem;
+}
+.pos-product-card {
+  background: var(--pos-surface);
+  border: 1px solid var(--pos-border);
+  border-radius: var(--pos-radius);
+  padding: .75rem;
+  cursor: pointer;
+  transition: box-shadow .15s ease, transform .1s ease, border-color .15s ease;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+}
+.pos-product-card:hover {
+  box-shadow: var(--pos-shadow-md);
+  border-color: var(--pos-primary);
+}
+.pos-product-card:active {
+  transform: scale(.98);
+}
+.pos-product-card .pos-product-image {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: var(--pos-radius-sm);
+  background: var(--pos-bg);
+  margin-bottom: .5rem;
+}
+.pos-product-card .pos-product-image-placeholder {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--pos-radius-sm);
+  background: var(--pos-bg);
+  margin-bottom: .5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pos-text-muted);
+  font-size: 1.75rem;
+}
+.pos-product-card .pos-product-name {
+  font-weight: 600;
+  font-size: .85rem;
+  line-height: 1.25;
+  margin-bottom: .25rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.pos-product-card .pos-product-price {
+  color: var(--pos-success-dark);
+  font-weight: 700;
+}

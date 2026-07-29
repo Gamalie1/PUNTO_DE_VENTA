@@ -3,46 +3,20 @@
 {% block content %} {% load static %}
 
 <style>
-  .card {
-    border-radius: 12px;
-  }
-  .card-header {
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
-  }
+  /* Estilos especificos de esta pantalla. El look general (tarjetas,
+     botones, colores de marca) ya lo define pos-design-system.css. */
   .table td {
     vertical-align: middle;
   }
-  .btn {
-    border-radius: 8px;
-  }
-  .btn-primary {
-    background: linear-gradient(45deg, #007bff, #0056b3);
-    border: none;
-  }
-  .btn-success {
-    background: linear-gradient(45deg, #28a745, #1e7e34);
-    border: none;
-  }
   .total-box {
-    background: #f4f6f9;
+    background: var(--pos-primary-light, #f4f6f9);
     border-radius: 12px;
     padding: 15px;
   }
   .total-precio {
     font-size: 2rem;
     font-weight: bold;
-    color: #28a745;
-  }
-  .table-hover tbody tr:hover {
-    background: #f1f1f1;
-    cursor: pointer;
-  }
-  .product-image {
-    width: 40px;
-    height: 40px;
-    object-fit: cover;
-    border-radius: 8px;
+    color: var(--pos-success-dark, #28a745);
   }
   .toast-notification {
     box-shadow: 0 0.5rem 1rem rgba(0,0,0,.15);
@@ -121,34 +95,36 @@
               <input type="text" id="buscarProducto" class="form-control search-box" placeholder="Buscar...">
             </div>
           </div>
-          <div class="card-body p-0" style="height: 500px; overflow-y: auto">
-            <table class="table table-hover mb-0">
-              <tbody id="lista-productos">
-                {% for producto in productos %}
-                <tr class="producto-row" data-nombre="{{ producto.nombre|lower }}" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}" data-id="{{ producto.id }}">
-                  <td class="text-center">
-                    {% if producto.imagen %}
-                      <img src="{{ producto.imagen.url }}" class="product-image">
-                    {% else %}
-                      <i class="fas fa-box fa-2x text-muted"></i>
-                    {% endif %}
-                  </td>
-                  <td class="font-weight-bold">{{ producto.nombre }}</td>
-                  <td class="text-success font-weight-bold">${{ producto.precio }}</td>
-                  <td><span class="badge badge-success">{{ producto.stock }}</span></td>
-                  <td class="text-right">
-                    <button class="btn btn-sm btn-primary agregar-producto"
-                            data-id="{{ producto.id }}"
-                            data-nombre="{{ producto.nombre }}"
-                            data-precio="{{ producto.precio }}"
-                            data-stock="{{ producto.stock }}">
-                      <i class="fas fa-plus"></i>
-                    </button>
-                  </td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
+          <div class="card-body" style="max-height: 560px; overflow-y: auto">
+            <div id="lista-productos" class="pos-product-grid">
+              {% for producto in productos %}
+              <div class="producto-row pos-product-card" data-nombre="{{ producto.nombre|lower }}" data-precio="{{ producto.precio|stringformat:'0.2f' }}" data-stock="{{ producto.stock }}" data-id="{{ producto.id }}">
+                {% if producto.imagen %}
+                  <img src="{{ producto.imagen.url }}" class="pos-product-image" alt="{{ producto.nombre }}">
+                {% else %}
+                  <div class="pos-product-image-placeholder"><i class="fas fa-box"></i></div>
+                {% endif %}
+                <div class="pos-product-name">{{ producto.nombre }}</div>
+                <div class="pos-product-price">${{ producto.precio }}</div>
+                <div class="mt-1 mb-2">
+                  {% if producto.stock == 0 %}
+                    <span class="badge badge-danger">Sin stock</span>
+                  {% elif producto.stock <= 5 %}
+                    <span class="badge badge-warning">{{ producto.stock }} disp.</span>
+                  {% else %}
+                    <span class="badge badge-success">{{ producto.stock }} disp.</span>
+                  {% endif %}
+                </div>
+                <button type="button" class="btn btn-sm btn-primary btn-block mt-auto agregar-producto"
+                        data-id="{{ producto.id }}"
+                        data-nombre="{{ producto.nombre }}"
+                        data-precio="{{ producto.precio|stringformat:'0.2f' }}"
+                        data-stock="{{ producto.stock }}">
+                  <i class="fas fa-plus"></i> Agregar
+                </button>
+              </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
