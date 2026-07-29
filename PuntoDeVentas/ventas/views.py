@@ -10,23 +10,16 @@ from django.views.generic import ListView
 from django.views.generic import DetailView
 from decimal import Decimal
 from django.http import JsonResponse
-from django.template.loader import render_to_string
-from weasyprint import HTML
 from django.http import HttpResponse
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Image,TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.pagesizes import mm
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import letter
-import os
-from django.conf import settings
-from django.contrib.staticfiles import finders
 from reportlab.platypus import HRFlowable
 from datetime import datetime
 from django.utils.dateparse import parse_date
 from clientes.models import Cliente
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import inch
 from caja.models import Transaccion
 from django.contrib.auth.mixins import LoginRequiredMixin
 import logging
@@ -254,144 +247,103 @@ def guardar_pago(request):
 
 @login_required
 def descargar_ticket(request, venta_id):
+    """Genera el ticket en PDF con el tamano real de un rollo termico de
+    58mm (no una hoja carta con una tabla angosta simulando un ticket).
+
+    El alto de la "pagina" se calcula segun cuantas lineas va a ocupar
+    el contenido (cada producto ocupa ~2 lineas), como corresponde a un
+    rollo continuo: ni deja papel en blanco de mas ni corta contenido.
+    """
     venta = get_object_or_404(Venta, id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta).select_related('producto')
+    sucursal = Sucursal.objects.first()
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="ticket_{venta.id}.pdf"'
+    nombre_archivo = venta.numero_ticket or f"VT-{venta.id:05d}"
+    response['Content-Disposition'] = f'attachment; filename="ticket_{nombre_archivo}.pdf"'
 
-    # Márgenes más ajustados para simular ticket
-    doc = SimpleDocTemplate(response, pagesize=letter,
-                            rightMargin=0.6*inch, leftMargin=0.6*inch,
-                            topMargin=0.5*inch, bottomMargin=0.5*inch)
+    ancho_ticket = 58 * mm
+    margen = 3 * mm
+    ancho_util = ancho_ticket - (2 * margen)
 
-    styles = getSampleStyleSheet()
-    estilo_normal = styles['Normal']
-    estilo_titulo = styles['Title']
-    estilo_negrita = ParagraphStyle(
-        'negrita',
-        parent=estilo_normal,
-        fontName='Helvetica-Bold',
-        fontSize=10
-    )
-    estilo_pequeno = ParagraphStyle(
-        'pequeno',
-        parent=estilo_normal,
-        fontSize=8
+    lineas_fijas = 14 + (3 if venta.cliente else 0)
+    lineas_productos = len(detalles) * 2
+    alto_estimado = (lineas_fijas + lineas_productos) * 3.3 * mm
+    alto_ticket = max(alto_estimado, 60 * mm)
+
+    doc = SimpleDocTemplate(
+        response,
+        pagesize=(ancho_ticket, alto_ticket),
+        leftMargin=margen, rightMargin=margen,
+        topMargin=margen, bottomMargin=margen,
     )
 
-    # Ajustes generales
-    estilo_normal.fontSize = 9
-    estilo_titulo.fontSize = 14
-    estilo_titulo.alignment = 1  # centrado
+    base = getSampleStyleSheet()['Normal']
+    estilo_titulo = ParagraphStyle('titulo', parent=base, alignment=1, fontName='Helvetica-Bold', fontSize=11, leading=13)
+    estilo_centrado = ParagraphStyle('centrado', parent=base, alignment=1, fontSize=8, leading=10)
+    estilo_normal = ParagraphStyle('normal_ticket', parent=base, fontSize=8, leading=10)
+    estilo_pequeno = ParagraphStyle('pequeno_ticket', parent=base, fontSize=7, leading=9)
+
+    def separador():
+        return HRFlowable(width="100%", thickness=0.75, color=colors.black, spaceBefore=2, spaceAfter=2)
+
+    def fila_monto(etiqueta, valor, negritas=False):
+        tabla = Table([[etiqueta, valor]], colWidths=[ancho_util * 0.6, ancho_util * 0.4])
+        tabla.setStyle(TableStyle([
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold' if negritas else 'Helvetica'),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 0),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 0),
+            ('TOPPADDING', (0, 0), (-1, -1), 1),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+        ]))
+        return tabla
 
     elementos = []
 
-    # LOGO + TÍTULO
-    logo_path = finders.find('dist/img/AdminLTELogo.png')
-    if logo_path and os.path.exists(logo_path):
-        logo = Image(logo_path, width=40, height=40)
-    else:
-        logo = ""
+    # ENCABEZADO (datos reales de la sucursal, no un texto fijo)
+    nombre_negocio = sucursal.nombre if sucursal and sucursal.nombre else "Mi Negocio"
+    elementos.append(Paragraph(nombre_negocio.upper(), estilo_titulo))
+    if sucursal and sucursal.direccion:
+        elementos.append(Paragraph(sucursal.direccion, estilo_centrado))
+    if sucursal and sucursal.telefono:
+        elementos.append(Paragraph(f"Tel: {sucursal.telefono}", estilo_centrado))
+    elementos.append(Spacer(1, 2 * mm))
 
-    titulo = Paragraph("<b>Purificadora</b>", estilo_titulo)
+    elementos.append(Paragraph(f"Ticket: {venta.numero_ticket or venta.id}", estilo_normal))
+    elementos.append(Paragraph(f"Fecha: {venta.fecha.strftime('%d/%m/%Y %H:%M')}", estilo_normal))
+    if venta.vendedor:
+        elementos.append(Paragraph(f"Atendio: {venta.vendedor.get_username()}", estilo_normal))
 
-    header = Table(
-        [[logo, titulo]],
-        colWidths=[50, 150]
-    )
-    header.setStyle(TableStyle([
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-        ('ALIGN', (1,0), (1,0), 'CENTER'),
-        ('LEFTPADDING', (0,0), (-1,-1), 0),
-        ('RIGHTPADDING', (0,0), (-1,-1), 0),
-    ]))
-    elementos.append(header)
-    elementos.append(Spacer(1, 10))
-
-    # DATOS DEL TICKET
-    elementos.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
-    elementos.append(Paragraph(f"<b>Ticket:</b> #{venta.id}", estilo_normal))
-    elementos.append(Paragraph(f"<b>Fecha:</b> {venta.fecha.strftime('%d/%m/%Y %H:%M')}", estilo_normal))
-
-    # CLIENTE (si existe)
     if venta.cliente:
-        elementos.append(Spacer(1, 5))
-        elementos.append(Paragraph("<b>Cliente:</b>", estilo_negrita))
-        cliente_info = [f"Nombre: {venta.cliente.nombre}"]
+        elementos.append(separador())
+        elementos.append(Paragraph(f"Cliente: {venta.cliente.nombre}", estilo_normal))
         if venta.cliente.telefono:
-            cliente_info.append(f"Teléfono: {venta.cliente.telefono}")
-        if venta.cliente.direccion:
-            cliente_info.append(f"Dirección: {venta.cliente.direccion}")
-        for line in cliente_info:
-            elementos.append(Paragraph(line, estilo_normal))
-        elementos.append(Spacer(1, 5))
+            elementos.append(Paragraph(f"Tel: {venta.cliente.telefono}", estilo_normal))
 
-    elementos.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
-    elementos.append(Spacer(1, 5))
+    elementos.append(separador())
 
-    # TABLA DE PRODUCTOS
-    data = [["Cant.", "Producto", "Precio Unit.", "Subtotal"]]
+    # PRODUCTOS: una linea con el nombre (puede envolver) y otra con
+    # cantidad x precio / subtotal. Nada de columnas fijas por letra,
+    # asi los nombres largos no rompen el ancho de 58mm.
     for d in detalles:
         subtotal = d.cantidad * d.precio
-        data.append([
-            f"{d.cantidad}",
-            d.producto.nombre,
-            f"${d.precio:.2f}",
-            f"${subtotal:.2f}"
-        ])
+        elementos.append(Paragraph(d.producto.nombre, estilo_normal))
+        elementos.append(fila_monto(f"{d.cantidad} x ${d.precio:.2f}", f"${subtotal:.2f}"))
 
-    # Anchos de columna (ajustables)
-    col_widths = [40, 180, 80, 80]
-    tabla_productos = Table(data, colWidths=col_widths)
-    tabla_productos.setStyle(TableStyle([
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
-        ('ALIGN', (0,0), (0,-1), 'CENTER'),
-        ('ALIGN', (2,1), (3,-1), 'RIGHT'),
-        ('FONTSIZE', (0,0), (-1,0), 10),
-        ('FONTSIZE', (0,1), (-1,-1), 9),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-        ('LEFTPADDING', (0,0), (-1,-1), 4),
-        ('RIGHTPADDING', (0,0), (-1,-1), 4),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-    ]))
-    elementos.append(tabla_productos)
-    elementos.append(Spacer(1, 10))
+    elementos.append(separador())
 
-    # RESUMEN (subtotal, total, pago)
-    resumen_data = [
-        ["Subtotal:", f"${venta.total:.2f}"],
-        ["Descuento:", "$0.00"],
-        ["Total a pagar:", f"${venta.total:.2f}"],
-        ["", ""],
-        ["Efectivo recibido:", f"${venta.monto_pagado:.2f}" if venta.monto_pagado else "$0.00"],
-        ["Cambio:", f"${venta.cambio:.2f}" if venta.cambio else "$0.00"],
-    ]
+    elementos.append(fila_monto("TOTAL:", f"${venta.total:.2f}", negritas=True))
+    if venta.monto_pagado is not None:
+        elementos.append(fila_monto("Pago:", f"${venta.monto_pagado:.2f}"))
+    if venta.cambio is not None:
+        elementos.append(fila_monto("Cambio:", f"${venta.cambio:.2f}"))
 
-    tabla_resumen = Table(resumen_data, colWidths=[150, 100])
-    tabla_resumen.setStyle(TableStyle([
-        ('FONTNAME', (0,0), (-1,-1), 'Helvetica'),
-        ('FONTSIZE', (0,0), (-1,-1), 9),
-        ('ALIGN', (1,0), (1,-1), 'RIGHT'),
-        ('LINEABOVE', (0,2), (-1,2), 0.5, colors.grey),
-        ('LINEBELOW', (0,2), (-1,2), 0.5, colors.grey),
-        ('LINEABOVE', (0,4), (-1,4), 0.5, colors.grey),
-        ('LINEBELOW', (0,4), (-1,4), 0.5, colors.grey),
-        ('FONTNAME', (0,2), (-1,2), 'Helvetica-Bold'),
-        ('FONTNAME', (0,4), (-1,4), 'Helvetica-Bold'),
-    ]))
-
-    # Colocamos la tabla de resumen centrada después de la tabla de productos
-    elementos.append(tabla_resumen)
-    elementos.append(Spacer(1, 20))
-
-    # MENSAJE FINAL
-    elementos.append(HRFlowable(width="100%", thickness=0.5, color=colors.grey))
-    elementos.append(Spacer(1, 5))
-    elementos.append(Paragraph("¡Gracias por su compra!", estilo_negrita))
-    elementos.append(Paragraph("Vuelva pronto", estilo_pequeno))
+    elementos.append(separador())
+    mensaje_ticket = sucursal.mensaje_ticket if sucursal and sucursal.mensaje_ticket else "¡Gracias por su compra!"
+    elementos.append(Paragraph(mensaje_ticket, estilo_centrado))
+    elementos.append(Spacer(1, 3 * mm))
 
     doc.build(elementos)
     return response
@@ -402,10 +354,10 @@ def descargar_ticket(request, venta_id):
 def imprimir_ticket(request, venta_id):
     venta = get_object_or_404(Venta, id=venta_id)
     detalles = DetalleVenta.objects.filter(venta=venta).select_related('producto')
-    
-    # Obtener el mensaje del ticket de la sucursal
-    sucursal = Sucursal.objects.first()  # Asumimos que solo tienes una sucursal
-    mensaje_ticket = sucursal.mensaje_ticket if sucursal else "Gracias por su compra."
+
+    # Asumimos una sola sucursal por ahora (no hay selector de sucursal en el sistema)
+    sucursal = Sucursal.objects.first()
+    mensaje_ticket = sucursal.mensaje_ticket if sucursal and sucursal.mensaje_ticket else "¡Gracias por su compra!"
 
     # Calcula el precio total para cada producto
     for detalle in detalles:
@@ -414,7 +366,8 @@ def imprimir_ticket(request, venta_id):
     return render(request, "ticket.html", {
         "venta": venta,
         "detalles": detalles,
-        "mensaje_ticket": mensaje_ticket  # Pasamos el mensaje del ticket
+        "sucursal": sucursal,
+        "mensaje_ticket": mensaje_ticket,
     })
 
 

@@ -2,22 +2,33 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <title>Ticket {{ venta.numero_ticket|default:venta.id }}</title>
     <style>
-      body {
-        width: 80mm;
-        font-family: monospace;
-        font-size: 12px;
+      /* Fuerza el tamano de papel a 58mm en el dialogo de impresion.
+         "auto" en el alto deja que el driver de la impresora termica
+         corte segun el contenido real (rollo continuo), en vez de un
+         alto fijo tipo hoja carta. */
+      @page {
+        size: 58mm auto;
         margin: 0;
-        padding: 5mm;
-        line-height: 1.4;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 58mm;
+        font-family: 'Courier New', monospace;
+        font-size: 11px;
+        margin: 0;
+        padding: 2mm 3mm;
+        line-height: 1.35;
+        color: #000;
       }
 
       .center {
         text-align: center;
-      }
-
-      .right {
-        text-align: right;
       }
 
       .bold {
@@ -26,30 +37,37 @@
 
       hr {
         border: none;
-        border-top: 1px dashed black;
+        border-top: 1px dashed #000;
         margin: 5px 0;
       }
 
       .row {
         display: flex;
         justify-content: space-between;
+        gap: 4px;
       }
 
       .small {
-        font-size: 10px;
+        font-size: 9px;
       }
 
       .ticket-header {
-        margin-bottom: 10px;
+        margin-bottom: 6px;
+      }
+
+      .ticket-header h3 {
+        margin: 0 0 2px 0;
+        font-size: 14px;
       }
 
       .ticket-footer {
-        margin-top: 10px;
+        margin-top: 8px;
       }
 
       .product-name {
-        font-size: 12px;
-        margin-bottom: 2px;
+        font-size: 11px;
+        margin-bottom: 1px;
+        word-break: break-word;
       }
 
       .total-row {
@@ -57,72 +75,99 @@
       }
 
       .footer-text {
-        font-size: 10px;
-        color: #555;
+        font-size: 9px;
       }
 
       .hr-margin {
+        margin-top: 6px;
+        margin-bottom: 6px;
+      }
+
+      /* Solo visible en pantalla, para poder reimprimir manualmente si
+         el auto-print del navegador no se dispara (algunos navegadores
+         moviles bloquean window.print() en el evento load). */
+      .btn-imprimir {
+        display: block;
+        width: 100%;
         margin-top: 8px;
-        margin-bottom: 8px;
+        padding: 8px;
+        font-size: 12px;
+        font-family: sans-serif;
+        background: #2f6fed;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+      }
+
+      @media print {
+        .btn-imprimir {
+          display: none;
+        }
       }
     </style>
   </head>
 
   <body onload="window.print()">
-    <!-- 🏪 HEADER -->
+    <!-- ENCABEZADO -->
     <div class="center ticket-header">
-      <h3 style="margin: 0">PURIFICADORA</h3>
-      <div class="small">Ticket #{{ venta.id }}</div>
-      <div class="small">{{ venta.fecha }}</div>
+      <h3>{{ sucursal.nombre|default:"Mi Negocio"|upper }}</h3>
+      {% if sucursal.direccion %}<div class="small">{{ sucursal.direccion }}</div>{% endif %}
+      {% if sucursal.telefono %}<div class="small">Tel: {{ sucursal.telefono }}</div>{% endif %}
+      <div class="small">Ticket: {{ venta.numero_ticket|default:venta.id }}</div>
+      <div class="small">{{ venta.fecha|date:"d/m/Y H:i" }}</div>
+      {% if venta.vendedor %}<div class="small">Atendió: {{ venta.vendedor.get_username }}</div>{% endif %}
     </div>
+
     {% if venta.cliente %}
-    <div class="ticket-cliente">
+    <hr class="hr-margin" />
+    <div class="ticket-cliente small">
       <strong>Cliente:</strong> {{ venta.cliente.nombre }}
-      {% if venta.cliente.telefono %}<br><strong>Teléfono:</strong> {{ venta.cliente.telefono }}{% endif %}
+      {% if venta.cliente.telefono %}<br><strong>Tel:</strong> {{ venta.cliente.telefono }}{% endif %}
     </div>
     {% endif %}
 
-
     <hr class="hr-margin" />
 
-    <!-- 🛒 PRODUCTOS -->
+    <!-- PRODUCTOS -->
     {% for d in detalles %}
     <div>
       <div class="product-name">{{ d.producto.nombre }}</div>
       <div class="row small">
-        <span>{{ d.cantidad }} x ${{ d.precio }}</span>
-        <span>${{ d.total_producto }}</span>
+        <span>{{ d.cantidad }} x ${{ d.precio|floatformat:2 }}</span>
+        <span>${{ d.total_producto|floatformat:2 }}</span>
       </div>
     </div>
     {% endfor %}
 
     <hr class="hr-margin" />
 
-    <!-- 💰 TOTALES -->
+    <!-- TOTALES -->
     <div class="row total-row">
-      <span>Subtotal:</span>
-      <span>${{ venta.total }}</span>
+      <span>TOTAL:</span>
+      <span>${{ venta.total|floatformat:2 }}</span>
     </div>
 
-    <div class="row total-row">
+    {% if venta.monto_pagado is not None %}
+    <div class="row">
       <span>Pagó:</span>
-      <span>${{ venta.monto_pagado }}</span>
+      <span>${{ venta.monto_pagado|floatformat:2 }}</span>
     </div>
+    {% endif %}
 
-    <div class="row total-row">
+    {% if venta.cambio is not None %}
+    <div class="row">
       <span>Cambio:</span>
-      <span>${{ venta.cambio }}</span>
+      <span>${{ venta.cambio|floatformat:2 }}</span>
     </div>
+    {% endif %}
 
     <hr class="hr-margin" />
 
-    <!-- 📝 FOOTER -->
+    <!-- PIE -->
     <div class="center ticket-footer">
-      <p class="footer-text">¡Gracias por su compra!</p>
-      <p class="footer-text">Visítenos nuevamente.</p>
-      <!-- Mostrar el mensaje del ticket -->
       <p class="footer-text">{{ mensaje_ticket }}</p>
-      <!-- Mensaje de la sucursal -->
     </div>
+
+    <button class="btn-imprimir" onclick="window.print()">Imprimir de nuevo</button>
   </body>
 </html>

@@ -132,11 +132,21 @@ body, .content-wrapper {
   font-weight: 600;
 }
 
-/* ===== Utilidades para vistas tactiles (punto de venta, tarjetas de producto) ===== */
+/* ===== Utilidades para vistas tactiles (punto de venta, tarjetas de producto) =====
+   Mobile-first: por defecto una grilla densa (funciona bien en celular
+   Y en el panel de productos angosto de una tablet, que en el punto de
+   venta comparte pantalla con el carrito). Solo en pantallas grandes
+   (donde el panel de productos tiene mucho mas espacio) se agranda. */
 .pos-product-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: .75rem;
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+  gap: .5rem;
+}
+@media (min-width: 1200px) {
+  .pos-product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: .75rem;
+  }
 }
 .pos-product-card {
   background: var(--pos-surface);
