@@ -15,7 +15,7 @@
   <!-- Tempusdominus Bootstrap 4 -->
   <link rel="stylesheet" href="/static/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css">
   <!-- iCheck -->
-  <link rel="stylesheet" href="static//plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+  <link rel="stylesheet" href="/static/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
   <!-- JQVMap -->
   <link rel="stylesheet" href="/static/plugins/jqvmap/jqvmap.min.css">
   <!-- Theme style -->
@@ -290,8 +290,13 @@
 </script>
 <!-- Bootstrap 4 -->
 <script src="/static/plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
-<!-- ChartJS -->
-<script src="/static//static/plugins/chart.js/Chart.min.js"></script>
+<!-- ChartJS: la copia local vendorizada es v2.9.4 (API vieja, con
+     "tooltips" en vez de "plugins.tooltip"). El dashboard usa la sintaxis
+     de Chart.js 3+, cargada aparte via CDN en index.html. Esta linea
+     tenia una ruta rota (nunca cargaba); "arreglarla" cargaria la v2.9.4
+     y romperia los graficos del dashboard, asi que se quita en vez de
+     corregir la ruta. Si se necesita evitar la dependencia del CDN,
+     hay que actualizar este archivo vendorizado a Chart.js 3+ primero. -->
 <!-- Sparkline -->
 <script src="/static/plugins/sparklines/sparkline.js"></script>
 <!-- JQVMap -->
