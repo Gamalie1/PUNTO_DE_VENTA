@@ -34,6 +34,8 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from rutas.models import Ruta, AsignacionDiaria
 from rutas.services import calcular_progreso_asignaciones
+from .services import filtrar_ventas
+from PuntoDeVentas.exports import exportar_excel, exportar_pdf
 # Create your views here.
 
 @login_required
@@ -183,32 +185,7 @@ class VentaListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        # Base: ordenar por fecha descendente
-        queryset = super().get_queryset().order_by('-fecha')
-
-        # Filtrar según el rol del usuario actual
-        user = self.request.user
-        if user.rol != 'ADMIN':
-            # Si es cajero o almacén, solo sus propias ventas
-            queryset = queryset.filter(vendedor=user)  # Cambia 'usuario' por el campo real
-
-        # Filtro por número de ticket (si existe)
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(numero_ticket__icontains=search)
-
-        # Filtro por rango de fechas
-        fecha_range = self.request.GET.get('fecha')
-        if fecha_range:
-            partes = fecha_range.split(' - ')
-            if len(partes) == 2:
-                fecha_desde = parse_date(partes[0])
-                fecha_hasta = parse_date(partes[1])
-                if fecha_desde and fecha_hasta:
-                    fecha_hasta = datetime.combine(fecha_hasta, datetime.max.time())
-                    queryset = queryset.filter(fecha__range=(fecha_desde, fecha_hasta))
-
-        return queryset
+        return filtrar_ventas(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -476,3 +453,32 @@ def api_buscar_por_codigo(request):
     except Exception as e:
         logger.exception("Error inesperado en api_buscar_por_codigo")
         return JsonResponse({'error': 'Error interno del servidor'}, status=500)
+
+
+def _filas_ventas(request):
+    encabezados = ['Ticket', 'Fecha', 'Vendedor', 'Cliente', 'Ruta', 'Total', 'Monto pagado', 'Cambio']
+    filas = []
+    for venta in filtrar_ventas(request):
+        filas.append([
+            venta.numero_ticket or f"VT-{venta.id:05d}",
+            venta.fecha.strftime('%d/%m/%Y %H:%M'),
+            venta.vendedor.get_username() if venta.vendedor else '-',
+            venta.cliente.nombre if venta.cliente else '-',
+            venta.ruta.nombre if venta.ruta else '-',
+            float(venta.total),
+            float(venta.monto_pagado) if venta.monto_pagado is not None else '-',
+            float(venta.cambio) if venta.cambio is not None else '-',
+        ])
+    return encabezados, filas
+
+
+@login_required
+def exportar_ventas_excel(request):
+    encabezados, filas = _filas_ventas(request)
+    return exportar_excel('ventas', encabezados, filas, titulo_hoja='Ventas')
+
+
+@login_required
+def exportar_ventas_pdf(request):
+    encabezados, filas = _filas_ventas(request)
+    return exportar_pdf('ventas', 'Listado de Ventas', encabezados, filas)

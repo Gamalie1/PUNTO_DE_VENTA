@@ -37,6 +37,12 @@
 
 
         <div class="card-tools">
+          <a href="{% url 'clientes:exportar_excel' %}" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+          </a>
+          <a href="{% url 'clientes:exportar_pdf' %}" class="btn btn-outline-danger btn-sm">
+            <i class="fas fa-file-pdf"></i> PDF
+          </a>
           <span class="badge badge-primary">
             {{ clientes|length }} clientes
           </span>

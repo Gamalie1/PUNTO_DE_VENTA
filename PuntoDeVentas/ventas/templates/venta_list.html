@@ -15,6 +15,12 @@
         <a href="{% url 'punto_venta' %}" class="btn btn-success btn-sm">
           <i class="fas fa-plus-circle"></i> Crear nueva Venta
         </a>
+        <a href="{% url 'exportar_ventas_excel' %}?search={{ search }}&fecha={{ fecha }}" class="btn btn-outline-success btn-sm">
+          <i class="fas fa-file-excel"></i> Excel
+        </a>
+        <a href="{% url 'exportar_ventas_pdf' %}?search={{ search }}&fecha={{ fecha }}" class="btn btn-outline-danger btn-sm">
+          <i class="fas fa-file-pdf"></i> PDF
+        </a>
       </div>
     </div>
     <div class="card-body">

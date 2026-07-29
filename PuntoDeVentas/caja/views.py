@@ -18,25 +18,17 @@ from weasyprint import HTML
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from usuarios.permissions import RolRequiredMixin
+from .services import filtrar_cajas
+from PuntoDeVentas.exports import exportar_excel, exportar_pdf
 
 class CajaListView(LoginRequiredMixin, ListView):
     model = Caja
     template_name = 'caja_list.html'
     context_object_name = 'cajas'
     paginate_by = 15
-    ordering = ['-fecha_apertura']  # Esto se aplica al queryset base
 
     def get_queryset(self):
-        # Obtener el queryset base ordenado
-        queryset = super().get_queryset()
-        user = self.request.user
-
-        # Filtrar según rol
-        if user.rol != 'ADMIN':
-            # Asumimos que el modelo Caja tiene un campo 'usuario' (ForeignKey a Usuario)
-            queryset = queryset.filter(usuario_apertura=user)  # Cambia 'usuario' por el nombre real del campo
-
-        return queryset
+        return filtrar_cajas(self.request)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -304,6 +296,34 @@ def ticket_corte(request, corte_id):
         "corte": corte,
         "transacciones": transacciones
     })
+
+
+def _filas_cajas(request):
+    encabezados = ['Nombre', 'Saldo inicial', 'Saldo actual', 'Estado', 'Apertura', 'Cierre', 'Abierta por']
+    filas = []
+    for caja in filtrar_cajas(request):
+        filas.append([
+            caja.nombre,
+            float(caja.saldo_inicial),
+            float(caja.saldo_actual),
+            'Cerrada' if caja.cerrado else 'Abierta',
+            caja.fecha_apertura.strftime('%d/%m/%Y %H:%M'),
+            caja.fecha_cierre.strftime('%d/%m/%Y %H:%M') if caja.fecha_cierre else '-',
+            caja.usuario_apertura.get_username() if caja.usuario_apertura else '-',
+        ])
+    return encabezados, filas
+
+
+@login_required
+def exportar_cajas_excel(request):
+    encabezados, filas = _filas_cajas(request)
+    return exportar_excel('cajas', encabezados, filas, titulo_hoja='Cajas')
+
+
+@login_required
+def exportar_cajas_pdf(request):
+    encabezados, filas = _filas_cajas(request)
+    return exportar_pdf('cajas', 'Listado de Cajas', encabezados, filas)
 
 
 

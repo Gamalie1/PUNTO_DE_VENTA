@@ -13,6 +13,7 @@ from reportlab.lib.units import mm
 from reportlab.graphics.barcode import code128
 from django.contrib import messages
 import uuid
+from PuntoDeVentas.exports import exportar_excel, exportar_pdf
 
 # Create your views here.
 @login_required
@@ -270,3 +271,29 @@ def agregar_stock(request, pk):
             messages.error(request, 'La cantidad debe ser mayor que 0.')
 
     return redirect('editar_producto', pk=producto.pk)
+
+
+def _filas_productos():
+    encabezados = ['Producto', 'Precio', 'Stock', 'Es único', 'Fecha de creación']
+    filas = []
+    for producto in Producto.objects.all().order_by('-fecha_creacion'):
+        filas.append([
+            producto.nombre,
+            float(producto.precio),
+            producto.stock,
+            'Sí' if producto.es_unico else 'No',
+            producto.fecha_creacion.strftime('%d/%m/%Y %H:%M'),
+        ])
+    return encabezados, filas
+
+
+@login_required
+def exportar_productos_excel(request):
+    encabezados, filas = _filas_productos()
+    return exportar_excel('inventario', encabezados, filas, titulo_hoja='Inventario')
+
+
+@login_required
+def exportar_productos_pdf(request):
+    encabezados, filas = _filas_productos()
+    return exportar_pdf('inventario', 'Listado de Inventario', encabezados, filas)

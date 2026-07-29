@@ -8,4 +8,6 @@ urlpatterns = [
     path('nuevo/', views.ClienteCreateView.as_view(), name='crear'),
     path('editar/<int:pk>/', views.ClienteUpdateView.as_view(), name='editar'),
     path('eliminar/<int:pk>/', views.ClienteDeleteView.as_view(), name='eliminar'),
+    path('exportar/excel/', views.exportar_clientes_excel, name='exportar_excel'),
+    path('exportar/pdf/', views.exportar_clientes_pdf, name='exportar_pdf'),
 ]

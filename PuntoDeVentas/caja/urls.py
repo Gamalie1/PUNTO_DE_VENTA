@@ -16,5 +16,6 @@ urlpatterns = [
     path('corte/caja/ingresos-egresos/<int:caja_id>/', views.registrar_ingresos_egresos, name='registrar_ingresos_egresos'),
     path('corte/pdf/<int:corte_id>/', views.generar_pdf_corte, name='pdf_corte'),
     path('corte/ticket/<int:corte_id>/', views.ticket_corte, name='ticket_corte'),
-    
+    path('caja/exportar/excel/', views.exportar_cajas_excel, name='exportar_cajas_excel'),
+    path('caja/exportar/pdf/', views.exportar_cajas_pdf, name='exportar_cajas_pdf'),
 ]

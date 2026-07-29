@@ -27,3 +27,13 @@ def obtener_o_abrir_caja_del_dia(usuario):
         saldo_actual=0,
         usuario_apertura=usuario,
     )
+
+
+def filtrar_cajas(request):
+    """Mismo filtro por rol que usa CajaListView (no-admin solo ve las
+    suyas). La usan tanto el listado en pantalla como los export."""
+    queryset = Caja.objects.select_related('usuario_apertura', 'usuario_cierre').order_by('-fecha_apertura')
+    user = request.user
+    if user.rol != 'ADMIN':
+        queryset = queryset.filter(usuario_apertura=user)
+    return queryset

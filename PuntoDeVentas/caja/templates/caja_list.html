@@ -93,9 +93,19 @@
         <h5 class="mb-0">
           <i class="fas fa-cash-register"></i> Lista de Cajas
         </h5>
-        <a href="{% url 'caja_create' %}" class="btn btn-light btn-sm">
-          <i class="fas fa-plus-circle"></i> Crear nueva Caja
-        </a>
+        <div>
+          {% if request.user.rol == 'ADMIN' %}
+          <a href="{% url 'caja_create' %}" class="btn btn-light btn-sm">
+            <i class="fas fa-plus-circle"></i> Crear nueva Caja
+          </a>
+          {% endif %}
+          <a href="{% url 'exportar_cajas_excel' %}" class="btn btn-light btn-sm">
+            <i class="fas fa-file-excel"></i> Excel
+          </a>
+          <a href="{% url 'exportar_cajas_pdf' %}" class="btn btn-light btn-sm">
+            <i class="fas fa-file-pdf"></i> PDF
+          </a>
+        </div>
       </div>
     </div>
     <div class="card-body">

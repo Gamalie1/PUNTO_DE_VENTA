@@ -14,6 +14,12 @@
                 <a href="{% url 'crear_producto' %}" class="btn btn-primary shadow-sm">
                     <i class="fas fa-plus-circle mr-1"></i> Nuevo producto
                 </a>
+                <a href="{% url 'exportar_productos_excel' %}" class="btn btn-outline-success shadow-sm">
+                    <i class="fas fa-file-excel mr-1"></i> Excel
+                </a>
+                <a href="{% url 'exportar_productos_pdf' %}" class="btn btn-outline-danger shadow-sm">
+                    <i class="fas fa-file-pdf mr-1"></i> PDF
+                </a>
             </div>
         </div>
     </div>

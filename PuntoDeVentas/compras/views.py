@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import CompraGeneral
 from .forms import CompraGeneralForm
+from PuntoDeVentas.exports import exportar_excel, exportar_pdf
 
 class CompraListView(LoginRequiredMixin, ListView):
     model = CompraGeneral
@@ -48,6 +49,33 @@ def anular_compra(request, pk):
     else:
         messages.warning(request, 'Esta compra ya estaba anulada.')
     return redirect('compra_list')
+
+
+def _filas_compras():
+    encabezados = ['Fecha', 'Descripción', 'Cantidad', 'Total', 'Estado', 'Usuario']
+    filas = []
+    for compra in CompraGeneral.objects.all().order_by('-fecha'):
+        filas.append([
+            compra.fecha.strftime('%d/%m/%Y %H:%M'),
+            compra.descripcion,
+            compra.cantidad,
+            float(compra.total),
+            'Activa' if compra.estado else 'Anulada',
+            compra.usuario.get_username() if compra.usuario else 'Sistema',
+        ])
+    return encabezados, filas
+
+
+@login_required
+def exportar_compras_excel(request):
+    encabezados, filas = _filas_compras()
+    return exportar_excel('compras', encabezados, filas, titulo_hoja='Compras')
+
+
+@login_required
+def exportar_compras_pdf(request):
+    encabezados, filas = _filas_compras()
+    return exportar_pdf('compras', 'Listado de Compras', encabezados, filas)
 
 # Opcional: eliminar físicamente (solo para superuser o si prefieres)
 @login_required
